@@ -126,7 +126,8 @@ class Game {
       this.ui.showLoading(50, 'Setting up effects...')
 
       try {
-        this.postProcessing = new PostProcessing(window.innerWidth, window.innerHeight)
+        const dpr = window.devicePixelRatio || 1
+        this.postProcessing = new PostProcessing(window.innerWidth * dpr, window.innerHeight * dpr)
       } catch(e) {
         console.warn('PostProcessing init failed, skipping:', e)
         this.postProcessing = null
@@ -652,8 +653,8 @@ loop(time) {
 
     // Update HUD heights for board offset calculation
     if (this.renderer?.canvasRenderer) {
-      this.renderer.canvasRenderer.hudTopHeight = 48
-      this.renderer.canvasRenderer.hudBottomHeight = 48
+      this.renderer.canvasRenderer.hudTopHeight = 52
+      this.renderer.canvasRenderer.hudBottomHeight = 52
     }
 
     this.renderer?.resize(window.innerWidth, window.innerHeight)
@@ -661,7 +662,8 @@ loop(time) {
       this.animationManager.resize(window.innerWidth, window.innerHeight)
     }
     if (this.postProcessing) {
-      this.postProcessing.resize(window.innerWidth, window.innerHeight)
+      const dpr = window.devicePixelRatio || 1
+      this.postProcessing.resize(window.innerWidth * dpr, window.innerHeight * dpr)
     }
   }
 

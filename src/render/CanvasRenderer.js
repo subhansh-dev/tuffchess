@@ -7,20 +7,24 @@ export class CanvasRenderer {
     this.boardOffsetX = 0
     this.boardOffsetY = 0
     this.orientation = 1
-    this.hudTopHeight = 48    // player bar at top
-    this.hudBottomHeight = 48 // player bar at bottom
+    this.hudTopHeight = 52    // player bar at top (with border)
+    this.hudBottomHeight = 52 // player bar at bottom (with border)
     this.resize(width, height)
   }
 
   resize(width, height) {
     this.width = width
     this.height = height
-    // Board fits between HUD bars
-    const availableHeight = height - this.hudTopHeight - this.hudBottomHeight
-    const boardSize = Math.min(width * 0.92, availableHeight * 0.92)
+    // Board fits between HUD bars with comfortable margin
+    const topMargin = this.hudTopHeight + 8    // extra 8px gap below top bar
+    const bottomMargin = this.hudBottomHeight + 8 // extra 8px gap above bottom bar
+    const availableHeight = height - topMargin - bottomMargin
+    const maxBoardByWidth = width * 0.88   // leave some horizontal margin
+    const maxBoardByHeight = availableHeight * 0.92
+    const boardSize = Math.min(maxBoardByWidth, maxBoardByHeight)
     this.squareSize = boardSize / 8
     this.boardOffsetX = (width - boardSize) / 2
-    this.boardOffsetY = this.hudTopHeight + (availableHeight - boardSize) / 2
+    this.boardOffsetY = topMargin + (availableHeight - boardSize) / 2
   }
 
   clear() {

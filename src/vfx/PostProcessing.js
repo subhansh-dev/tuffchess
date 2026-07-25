@@ -52,8 +52,15 @@ export class PostProcessing {
     this._lastActiveEffects = sig
     this._dirty = false
 
+    // Copy the main canvas content at its native resolution (DPR-adjusted)
+    // We work entirely in device pixels, bypassing the DPR transform
+    const dpr = window.devicePixelRatio || 1
+    const cssW = ctx.canvas.width / dpr
+    const cssH = ctx.canvas.height / dpr
+
     this.offCtx.clearRect(0,0,this.width,this.height)
-    this.offCtx.drawImage(ctx.canvas,0,0)
+    // ctx.canvas is at DPR resolution, draw at 1:1 scale (no DPR transform)
+    this.offCtx.drawImage(ctx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height, 0, 0, this.width, this.height)
 
     if (this.bloom.intensity>0.01) this.applyBloom()
     if (this.chromatic.intensity>0.01) this.applyChromatic()
@@ -65,7 +72,13 @@ export class PostProcessing {
     if (this.screenFlash.intensity>0.01) this.applyScreenFlash()
     if (this.glitch.intensity>0.01) this.applyGlitch()
 
-    ctx.save(); ctx.globalAlpha=1; ctx.drawImage(this.offscreen,0,0); ctx.restore()
+    // Draw the processed result back to the main canvas, bypassing DPR transform
+    // Save current transform, reset to identity, draw at device pixel coordinates, restore
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0) // Reset to identity (device pixels)
+    ctx.globalAlpha = 1
+    ctx.drawImage(this.offscreen, 0, 0, this.width, this.height, 0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.restore()
   }
 
   _getSig() {

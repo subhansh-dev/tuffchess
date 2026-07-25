@@ -44,10 +44,16 @@ export class UIManager {
 
   showScreen(screenId) {
     Object.values(this.screens).forEach(s => {
-      if (s) s.classList.remove('active')
+      if (s) {
+        s.classList.remove('active')
+        // Ensure screens that shouldn't be visible are fully hidden
+        s.style.display = ''
+      }
     })
     const screen = this.screens[screenId]
     if (screen) {
+      // Game HUD is special: it's a transparent overlay, not a full-page screen
+      // Don't set display:flex on it, let CSS handle it
       screen.classList.add('active')
       this.currentScreen = screenId
     }
@@ -76,6 +82,7 @@ export class UIManager {
     const ls = this.screens.loading || document.getElementById('loading-screen')
     if (ls) {
       ls.classList.add('hidden')
+      ls.classList.remove('active')
       // Force remove after transition
       setTimeout(() => {
         try { ls.style.display = 'none' } catch(e) {}
