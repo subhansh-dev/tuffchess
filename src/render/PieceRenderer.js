@@ -32,15 +32,30 @@ export class PieceRenderer {
   loadAllPieces() {
     const pieceTypes = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn']
     const colors = ['white', 'black']
+    this._loadPromises = []
 
     for (const color of colors) {
       for (const type of pieceTypes) {
         const key = `${color}-${type}`
         const img = new Image()
+        const loadPromise = new Promise((resolve) => {
+          img.onload = () => resolve(true)
+          img.onerror = () => {
+            console.warn(`Piece image failed: ${key}, using fallback`)
+            resolve(false)
+          }
+        })
         img.src = `/assets/pieces/${key}.svg`
         this.pieceImages.set(key, img)
+        this._loadPromises.push(loadPromise)
       }
     }
+  }
+
+  async waitForLoad(timeoutMs = 5000) {
+    const allLoaded = Promise.all(this._loadPromises || [])
+    const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs))
+    await Promise.race([allLoaded, timeout])
   }
 
   setSelectedSquare(sq) { this.selectedSquare = sq }

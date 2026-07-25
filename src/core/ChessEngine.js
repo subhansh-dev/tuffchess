@@ -62,7 +62,7 @@ export class ChessEngine extends EventBus {
       colors,
       turn: this.chess.turn() === 'w' ? 1 : 2,
       castling: this.getCastlingRights(),
-      enPassant: this.chess.epSquare ? algebraicToIndex(this.chess.epSquare) : -1,
+      enPassant: this.getEnPassantSquare(),
       halfmove: this.chess._halfMoves ?? 0,
       fullmove: this.chess.moveNumber(),
       fen: this.chess.fen()
@@ -202,7 +202,7 @@ export class ChessEngine extends EventBus {
       const fen = this.chess.fen()
       const tempChess = new Chess(fen)
       // Flip the turn to the target color
-      const modifiedFen = fen.replace(/ [w|b] /, ` ${targetColor} `)
+      const modifiedFen = fen.replace(/ [wb] /, ` ${targetColor} `)
       try {
         tempChess.load(modifiedFen)
         return tempChess.inCheck()
@@ -218,10 +218,22 @@ export class ChessEngine extends EventBus {
     return map[type.toLowerCase()] || 0
   }
 
-getCastlingRights() {
+  getCastlingRights() {
     const fen = this.chess.fen()
     const parts = fen.split(' ')
     return parts[2] || '-'
+  }
+
+  getEnPassantSquare() {
+    // chess.js v1.4.0 doesn't have a public epSquare getter
+    // Parse from FEN instead
+    const fen = this.chess.fen()
+    const parts = fen.split(' ')
+    const epStr = parts[3]
+    if (epStr && epStr !== '-') {
+      return algebraicToIndex(epStr)
+    }
+    return -1
   }
 
   flip() {

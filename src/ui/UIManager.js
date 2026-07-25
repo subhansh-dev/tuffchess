@@ -66,17 +66,20 @@ export class UIManager {
   }
 
   showLoading(progress, text) {
-    const bar = document.querySelector('#loading-screen .loading-bar')
-    const txt = document.querySelector('#loading-screen .loading-text')
+    const bar = document.querySelector('#loading-screen .loading-bar-fill')
+    const txt = document.querySelector('#loading-screen .loading-status')
     if (bar) bar.style.width = progress + '%'
     if (txt) txt.textContent = text
   }
 
   hideLoading() {
-    const ls = this.screens.loading
+    const ls = this.screens.loading || document.getElementById('loading-screen')
     if (ls) {
       ls.classList.add('hidden')
-      setTimeout(() => { ls.style.display = 'none' }, 500)
+      // Force remove after transition
+      setTimeout(() => {
+        try { ls.style.display = 'none' } catch(e) {}
+      }, 700)
     }
   }
 

@@ -42,10 +42,19 @@ export class StockfishBot {
 
   async init() {
     // Use the worker-based stockfish from public folder
-    this.worker = new Worker('/stockfish-worker.js')
+    try {
+      this.worker = new Worker('/stockfish-worker.js')
+    } catch (err) {
+      console.warn('Failed to create Stockfish worker:', err)
+      return // Bot will be non-functional but game still works
+    }
 
     await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Stockfish worker init timeout')), 10000)
+      const timeout = setTimeout(() => {
+        console.warn('Stockfish worker init timeout')
+        this.ready = false
+        resolve() // Resolve instead of reject so game continues
+      }, 5000)
 
       let gotUciOk = false
 
@@ -99,7 +108,18 @@ export class StockfishBot {
   }
 
   async getBestMove(fen, elo = 1200) {
-    if (!this.ready) await this.init()
+    if (!this.ready) {
+      try {
+        await this.init()
+      } catch(e) {
+        console.warn('Bot not ready, returning null')
+        return null
+      }
+    }
+    if (!this.ready || !this.worker) {
+      console.warn('Bot unavailable, returning null')
+      return null
+    }
 
     const config = this.setSkillLevel(elo)
     const jitter = Math.floor((Math.random() - 0.5) * 400)

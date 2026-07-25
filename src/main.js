@@ -15,6 +15,7 @@ import { Camera } from './animation/Camera.js'
 import { TimeController } from './animation/TimeController.js'
 import { EventBus } from './utils/EventBus.js'
 import { PostProcessing } from './vfx/PostProcessing.js'
+import { BotEngine } from './bot/BotEngine.js'
 
 const DIFFICULTY_NAMES = {
   beginner: 'Beginner',
@@ -54,6 +55,7 @@ class Game {
     this.playerColor = 1
     this.botThinking = false
     this.gameActive = false
+    this.localBot = null // Fallback bot when Stockfish unavailable
 
     this.timeController = new TimeController()
     this.eventBus = new EventBus()
@@ -61,133 +63,180 @@ class Game {
   }
 
   async init() {
-    this.ui = new UIManager()
-    this.elo = new EloSystem()
-    this.matchHistory = new MatchHistory()
-    this.clock = new ChessClock()
-    this.audio = new AudioManager()
-    this.bot = new StockfishBot()
+    // SAFETY: No matter what happens, the loading screen MUST be dismissed
+    // so the user is never stuck on it forever.
+    const bootSafetyTimeout = setTimeout(() => {
+      console.warn('Boot safety timeout triggered \u2014 forcing loading screen dismissal')
+      try {
+        this.ui?.hideLoading()
+        this.ui?.showScreen('mainMenu')
+      } catch(e) { console.error('Safety timeout dismissal failed:', e) }
+      // Absolute fallback \u2014 remove loading DOM element manually
+      const ls = document.getElementById('loading-screen')
+      if (ls) { ls.style.display = 'none' }
+    }, 8000)
 
-    this.resize()
-    window.addEventListener('resize', () => this.resize())
+    try {
+      this.ui = new UIManager()
+      this.elo = new EloSystem()
+      this.matchHistory = new MatchHistory()
+      this.clock = new ChessClock()
+      this.audio = new AudioManager()
+      this.bot = new StockfishBot()
 
-    this.ui.showLoading(10, 'Initializing...')
+      this.resize()
+      window.addEventListener('resize', () => this.resize())
 
-    this.engine = new ChessEngine()
-    this.engine.init()
-    this.ui.showLoading(20, 'Setting up board...')
+      this.ui.showLoading(5, 'Initializing...')
 
-    const canvasRenderer = new CanvasRenderer(this.ctx, window.innerWidth, window.innerHeight)
-    const pieceRenderer = new PieceRenderer(canvasRenderer)
-    const boardRenderer = new BoardRenderer(canvasRenderer)
+      this.engine = new ChessEngine()
+      this.engine.init()
+      this.ui.showLoading(15, 'Setting up board...')
 
-    this.renderer = new Renderer(canvasRenderer, pieceRenderer, boardRenderer)
+      const canvasRenderer = new CanvasRenderer(this.ctx, window.innerWidth, window.innerHeight)
+      const pieceRenderer = new PieceRenderer(canvasRenderer)
+      const boardRenderer = new BoardRenderer(canvasRenderer)
 
-    this.renderer.pieceRenderer.setEngineRef(this.engine)
+      this.renderer = new Renderer(canvasRenderer, pieceRenderer, boardRenderer)
+      this.renderer.pieceRenderer.setEngineRef(this.engine)
 
-    this.ui.showLoading(25, 'Loading assets...')
+      this.ui.showLoading(25, 'Loading pieces...')
 
-    this.animationManager = new AnimationManager(
-      this.renderer.canvasRenderer,
-      this.renderer.pieceRenderer,
-      this.engine,
-      this.audio,
-      this.timeController,
-      this.eventBus
-    )
+      // Wait for piece SVGs to load (with fallback timeout)
+      await pieceRenderer.waitForLoad(5000).catch(() => {
+        console.warn('Some piece images failed to load, using fallbacks')
+      })
 
-    this.input = new InputManager(this.canvas, this.engine, this.renderer, this.animationManager)
+      this.ui.showLoading(40, 'Preparing animations...')
 
-    // Connect animation manager to renderer for speed line rendering
-    this.renderer.setAnimationManager(this.animationManager)
+      this.animationManager = new AnimationManager(
+        this.renderer.canvasRenderer,
+        this.renderer.pieceRenderer,
+        this.engine,
+        this.audio,
+        this.timeController,
+        this.eventBus
+      )
 
-    this.postProcessing = new PostProcessing(window.innerWidth, window.innerHeight)
+      this.input = new InputManager(this.canvas, this.engine, this.renderer, this.animationManager)
 
-    this.timeController.onTimeScaleChange = (scale) => {
-      this.animationManager.setTimeScale(scale)
-    }
-    this.timeController.onFreezeStart = (duration) => {
-      this.eventBus.emit('freeze:start', { duration })
-    }
-    this.timeController.onFreezeEnd = () => {
-      this.eventBus.emit('freeze:end')
-    }
+      // Connect animation manager to renderer for speed line rendering
+      this.renderer.setAnimationManager(this.animationManager)
 
-    const pos = this.engine.getPosition()
-    this.renderer.boardRenderer.setPosition(pos)
+      this.ui.showLoading(50, 'Setting up effects...')
 
-    this.engine.on('position', (pos) => {
-      this.renderer.boardRenderer.setPosition(pos)
-    })
-
-    this.engine.on('move', (move) => {
-      this.audio.playMove()
-    })
-    this.engine.on('capture', (captureData) => {
-      this.audio.playCapture?.()
-    })
-    this.engine.on('check', () => {
-      this.audio.playCheck()
-      // Anime camera zoom for check
-      const pos = this.engine.getPosition()
-      const kingSq = this.findKing(pos, this.engine.getTurn())
-      if (kingSq >= 0) {
-        const orientation = this.renderer.boardRenderer.boardAppearance.orientation
-        this.animationManager.zoomToKing(kingSq, orientation, 0.8)
-        setTimeout(() => { this.animationManager.resetCameraView() }, 1500)
+      try {
+        this.postProcessing = new PostProcessing(window.innerWidth, window.innerHeight)
+      } catch(e) {
+        console.warn('PostProcessing init failed, skipping:', e)
+        this.postProcessing = null
       }
-    })
-    this.engine.on('gameover', (gameOver) => {
-      this.audio.playGameOver()
-      if (gameOver && gameOver.result === 'checkmate') {
+
+      this.timeController.onTimeScaleChange = (scale) => {
+        this.animationManager.setTimeScale(scale)
+      }
+      this.timeController.onFreezeStart = (duration) => {
+        this.eventBus.emit('freeze:start', { duration })
+      }
+      this.timeController.onFreezeEnd = () => {
+        this.eventBus.emit('freeze:end')
+      }
+
+      const pos = this.engine.getPosition()
+      this.renderer.boardRenderer.setPosition(pos)
+
+      this.engine.on('position', (pos) => {
+        this.renderer.boardRenderer.setPosition(pos)
+      })
+
+      this.engine.on('move', (move) => {
+        this.audio.playMove()
+      })
+      this.engine.on('capture', (captureData) => {
+        this.audio.playCapture?.()
+      })
+      this.engine.on('check', () => {
+        this.audio.playCheck()
+        // Anime camera zoom for check
         const pos = this.engine.getPosition()
         const kingSq = this.findKing(pos, this.engine.getTurn())
         if (kingSq >= 0) {
           const orientation = this.renderer.boardRenderer.boardAppearance.orientation
-          this.animationManager.zoomToKing(kingSq, orientation, 1.5)
-          setTimeout(() => { this.animationManager.resetCameraView() }, 2500)
+          this.animationManager.zoomToKing(kingSq, orientation, 0.8)
+          setTimeout(() => { this.animationManager.resetCameraView() }, 1500)
         }
+      })
+      this.engine.on('gameover', (gameOver) => {
+        this.audio.playGameOver()
+        if (gameOver && gameOver.result === 'checkmate') {
+          const pos = this.engine.getPosition()
+          const kingSq = this.findKing(pos, this.engine.getTurn())
+          if (kingSq >= 0) {
+            const orientation = this.renderer.boardRenderer.boardAppearance.orientation
+            this.animationManager.zoomToKing(kingSq, orientation, 1.5)
+            setTimeout(() => { this.animationManager.resetCameraView() }, 2500)
+          }
+        }
+      })
+
+      // Clock timeout handler
+      this.clock.onFlag = (side) => {
+        if (!this.gameActive) return
+        const winner = side === 'white' ? 'black' : 'white'
+        this.endGame({ result: 'timeout', winner })
       }
-    })
 
-    // Clock timeout handler
-    this.clock.onFlag = (side) => {
-      if (!this.gameActive) return
-      const winner = side === 'white' ? 'black' : 'white'
-      this.endGame({ result: 'timeout', winner })
-    }
+      const initAudioOnClick = async () => {
+        await this.audio.init().catch(() => {})
+      }
+      this.canvas.addEventListener('click', initAudioOnClick, { once: true })
 
-    const initAudioOnClick = async () => {
-      await this.audio.init()
-    }
-    this.canvas.addEventListener('click', initAudioOnClick, { once: true })
+      this.ui.showLoading(60, 'Loading engine...')
+      try {
+        await Promise.race([
+          this.bot.init(),
+          new Promise((resolve) => setTimeout(resolve, 5000))
+        ])
+      } catch (err) {
+        console.warn('Stockfish init failed or timed out, continuing without bot:', err)
+      }
 
-    this.ui.showLoading(30, 'Loading engine...')
-    try {
-      await Promise.race([
-        this.bot.init(),
-        new Promise((resolve) => setTimeout(resolve, 15000))
-      ])
+      this.ui.showLoading(85, 'Almost ready...')
+      this.setupUIEvents()
+      this.setupInputEvents()
+      this.checkUrlParams()
+
+      this.ui.showLoading(100, 'Ready!')
+      await new Promise(r => setTimeout(r, 300))
+
+      // Clear safety timeout \u2014 we completed successfully
+      clearTimeout(bootSafetyTimeout)
+      this.ui.hideLoading()
+
+      this.updateMenuElo()
+      this.ui.showScreen('mainMenu')
+
+      this.running = true
+      requestAnimationFrame((t) => this.loop(t))
+
     } catch (err) {
-      console.warn('Stockfish init failed or timed out, continuing without bot:', err)
+      console.error('Critical init error:', err)
+      // Force dismiss loading screen even on catastrophic failure
+      clearTimeout(bootSafetyTimeout)
+      try {
+        this.ui?.hideLoading()
+        this.ui?.showScreen('mainMenu')
+        this.running = true
+        requestAnimationFrame((t) => this.loop(t))
+      } catch(e2) {
+        // Absolute fallback \u2014 just remove the loading DOM element manually
+        const ls = document.getElementById('loading-screen')
+        if (ls) ls.style.display = 'none'
+      }
     }
-
-    this.setupUIEvents()
-    this.setupInputEvents()
-    this.checkUrlParams()
-
-    this.ui.showLoading(100, 'Ready!')
-    await new Promise(r => setTimeout(r, 300))
-    this.ui.hideLoading()
-
-    this.updateMenuElo()
-    this.ui.showScreen('mainMenu')
-
-    this.running = true
-    requestAnimationFrame((t) => this.loop(t))
   }
 
-  setupUIEvents() {
+    setupUIEvents() {
     this.ui.on('play', () => this.ui.showScreen('modeSelect'))
     this.ui.on('back-to-menu', () => this.ui.showScreen('mainMenu'))
     this.ui.on('back-to-mode-select', () => this.ui.showScreen('modeSelect'))
@@ -273,6 +322,13 @@ class Game {
       this.updateClockDisplay(this.engine.getTurn() === 1 ? 'white' : 'black')
     })
 
+    this.ui.on('toggle-moves', () => {
+      const panel = document.querySelector('.move-list-panel')
+      if (panel) {
+        panel.classList.toggle('visible')
+      }
+    })
+
     this.ui.on('promote', (piece) => {
       this.input.resolvePromotion(piece)
     })
@@ -283,6 +339,40 @@ class Game {
       this.input.setInputEnabled(false)
       this.engine.setPaused(true)
       this.ui.showScreen('mainMenu')
+    })
+
+    this.ui.on('resign-game', () => {
+      if (!this.gameActive) return
+      const winner = this.playerColor === 1 ? 'black' : 'white'
+      this.endGame({ result: 'resignation', winner })
+    })
+
+    this.ui.on('share-game', () => {
+      this.ui.showShare(this.engine.getFEN())
+    })
+
+    this.ui.on('copy-share-url', () => {
+      const urlInput = document.querySelector('.share-url')
+      if (urlInput) {
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+          this.ui.showCopied()
+        }).catch(() => {})
+      }
+    })
+
+    this.ui.on('close-share', () => {
+      this.ui.hideShare()
+    })
+
+    this.ui.on('rematch', () => {
+      this.ui.hideGameOver()
+      this.startGame(this.gameMode, this.botDifficulty, this.timeControl)
+    })
+
+    this.ui.on('back-to-menu-gameover', () => {
+      this.ui.hideGameOver()
+      this.ui.showScreen('mainMenu')
+      this.updateMenuElo()
     })
   }
 
@@ -359,7 +449,20 @@ class Game {
 
     try {
       const elo = DIFFICULTY_ELO[this.botDifficulty] || 800
-      const moveStr = await this.bot.getBestMove(this.engine.getFEN(), elo, this.timeControl)
+      let moveStr = await this.bot.getBestMove(this.engine.getFEN(), elo)
+      
+      // If Stockfish is unavailable, use the local BotEngine fallback
+      if (!moveStr) {
+        console.warn('Stockfish unavailable, using local bot fallback')
+        if (!this.localBot) {
+          this.localBot = new BotEngine(this.botDifficulty || 'intermediate')
+        }
+        const fallbackMove = this.localBot.getBestMove(this.engine.chess)
+        if (fallbackMove) {
+          moveStr = fallbackMove.from + fallbackMove.to + (fallbackMove.promotion || '')
+        }
+      }
+      
       if (!moveStr || !this.gameActive) {
         this.ui.showThinking(botSide, false)
         this.botThinking = false
@@ -459,71 +562,78 @@ class Game {
 loop(time) {
     if (!this.running) return
 
-    const rawDt = Math.min((time - (this._lastLoopTime || time)) / 1000, 0.1)
-    this._lastLoopTime = time
+    try {
+      const rawDt = Math.min((time - (this._lastLoopTime || time)) / 1000, 0.1)
+      this._lastLoopTime = time
 
-    this.timeController.update(rawDt)
-    const scaledDt = this.timeController.getScaledDelta(rawDt)
+      this.timeController.update(rawDt)
 
-    // Tick clock every frame for smooth continuous updates
-    if (this.gameActive && this.clock.running && this.timeControl > 0) {
-      this.clock.updateFromLoop(rawDt)
-      this.updateClockDisplay('white')
-      this.updateClockDisplay('black')
-    }
-
-    this._accumulator = (this._accumulator || 0) + rawDt
-    const FIXED_DT = 1 / 60
-    const MAX_SUBSTEPS = 4
-    let steps = 0
-
-    while (this._accumulator >= FIXED_DT && steps < MAX_SUBSTEPS) {
-      const scaledFixedDt = FIXED_DT * this.timeController.getTimeScale()
-
-      if (this.animationManager) {
-        this.animationManager.update(FIXED_DT)
+      // Tick clock every frame for smooth continuous updates
+      if (this.gameActive && this.clock.running && this.timeControl > 0) {
+        this.clock.updateFromLoop(rawDt)
+        this.updateClockDisplay('white')
+        this.updateClockDisplay('black')
       }
 
-      if (this.renderer.particleSystem) {
-        this.renderer.particleSystem.update(FIXED_DT)
+      this._accumulator = (this._accumulator || 0) + rawDt
+      const FIXED_DT = 1 / 60
+      const MAX_SUBSTEPS = 4
+      let steps = 0
+
+      while (this._accumulator >= FIXED_DT && steps < MAX_SUBSTEPS) {
+        if (this.animationManager) {
+          this.animationManager.update(FIXED_DT)
+        }
+
+        if (this.renderer && this.renderer.particleSystem) {
+          this.renderer.particleSystem.update(FIXED_DT)
+        }
+
+        this._accumulator -= FIXED_DT
+        steps++
       }
 
-      this._accumulator -= FIXED_DT
-      steps++
-    }
-
-    this.renderer.render(
-      this.engine,
-      this.animationManager.getCamera(),
-      this.animationManager.getGhostPieces?.() || [],
-      this.animationManager.getTrails?.() || [],
-      this.animationManager.getCaptureEffects?.() || null
-    )
-
-    if (this.postProcessing) {
-      const hasActiveAnim = this.animationManager.captureEffect && !this.animationManager.captureEffect.finished
-      const cam = this.animationManager.getCamera?.()
-      const hasActiveCamera = cam && cam.isActive
-      if (hasActiveAnim || hasActiveCamera) {
-        this.postProcessing._forceRender = true
+      if (this.renderer) {
+        this.renderer.render(
+          this.engine,
+          this.animationManager?.getCamera() || null,
+          this.animationManager?.getGhostPieces?.() || [],
+          this.animationManager?.getTrails?.() || [],
+          this.animationManager?.getCaptureEffects?.() || null
+        )
       }
-      if (cam) {
-        this.postProcessing.setChromatic(cam.chromaticAberration > 0.01 ? cam.chromaticAberration : 0, 0)
-        this.postProcessing.setVignette(cam.vignette > 0.01 ? cam.vignette : 0)
-        this.postProcessing.setScreenFlash(cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.color : [255,255,255], cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.alpha : 0)
-        this.postProcessing.setColorGrade(cam.colorGrade?.contrast || 0, cam.colorGrade?.saturation || 0, cam.colorGrade?.brightness || 0)
-      } else {
-        this.postProcessing.setChromatic(0, 0)
-        this.postProcessing.setVignette(0)
-        this.postProcessing.setScreenFlash([255,255,255], 0)
-        this.postProcessing.setColorGrade(0, 0, 0)
-      }
-      this.postProcessing.render(this.ctx)
-      this.postProcessing._forceRender = false
-    }
 
-    if (this.renderer.particleSystem) {
-      this.renderer.particleSystem.render(this.ctx)
+      if (this.postProcessing && this.animationManager) {
+        try {
+          const hasActiveAnim = this.animationManager.captureEffect && !this.animationManager.captureEffect.finished
+          const cam = this.animationManager.getCamera?.()
+          const hasActiveCamera = cam && cam.isActive
+          if (hasActiveAnim || hasActiveCamera) {
+            this.postProcessing._forceRender = true
+          }
+          if (cam) {
+            this.postProcessing.setChromatic(cam.chromaticAberration > 0.01 ? cam.chromaticAberration : 0, 0)
+            this.postProcessing.setVignette(cam.vignette > 0.01 ? cam.vignette : 0)
+            this.postProcessing.setScreenFlash(cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.color : [255,255,255], cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.alpha : 0)
+            this.postProcessing.setColorGrade(cam.colorGrade?.contrast || 0, cam.colorGrade?.saturation || 0, cam.colorGrade?.brightness || 0)
+          } else {
+            this.postProcessing.setChromatic(0, 0)
+            this.postProcessing.setVignette(0)
+            this.postProcessing.setScreenFlash([255,255,255], 0)
+            this.postProcessing.setColorGrade(0, 0, 0)
+          }
+          this.postProcessing.render(this.ctx)
+          this.postProcessing._forceRender = false
+        } catch(e) {
+          // PostProcessing can fail silently — don't crash the game loop
+        }
+      }
+
+      if (this.renderer && this.renderer.particleSystem) {
+        this.renderer.particleSystem.render(this.ctx)
+      }
+    } catch(e) {
+      console.error('Render loop error:', e)
     }
 
     requestAnimationFrame((t) => this.loop(t))
