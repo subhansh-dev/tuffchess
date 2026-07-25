@@ -380,10 +380,15 @@ body::before {
   background: transparent !important;
   flex-direction: column;
   justify-content: flex-start;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 #game-hud.active {
   pointer-events: none !important;
   background: transparent !important;
+  opacity: 1;
+  visibility: visible;
 }
 #game-hud .player-bar { pointer-events: none; }
 #game-hud .player-clock { pointer-events: none; }
@@ -512,7 +517,7 @@ body::before {
 .hud-tools {
   position: absolute;
   right: 8px;
-  top: 56px;
+  top: 60px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -775,8 +780,8 @@ body::before {
 .move-list-panel {
   position: absolute;
   right: 16px;
-  top: 56px;
-  bottom: 56px;
+  top: 60px;
+  bottom: 60px;
   width: 200px;
   background: linear-gradient(180deg, rgba(240,232,216,0.92) 0%, rgba(232,220,202,0.92) 100%);
   border: 2px solid var(--border-strong);
