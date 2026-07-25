@@ -5,7 +5,7 @@ export class ParticleSystem {
     this.ctx = ctx
     this.x = options.x || 0
     this.y = options.y || 0
-    this.colors = options.colors || ['#ff6b6b', '#ffd700', '#ff9999']
+    this.colors = options.colors || ['#D46040', '#B8960F', '#E88070']
     this.count = options.count || 60
     this.duration = options.duration || 800
     this.size = options.size || { min: 2, max: 6 }

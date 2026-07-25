@@ -107,7 +107,7 @@ export class GlitchEffect {
   renderScanlines(ctx) {
     ctx.save()
     ctx.globalAlpha = 0.15 * this.intensity
-    ctx.strokeStyle = '#00ffff'
+    ctx.strokeStyle = '#D4A820'
     ctx.lineWidth = 1
     
     for (let y = 0; y < this.height; y += 4) {

@@ -227,12 +227,12 @@ export class ParticleEmitter {
 }
 
 export const ParticlePalettes = {
-  white: ['#ffffff', '#fff8dc', '#ffec8b', '#ffe4b5', '#fffacd'],
-  black: ['#333333', '#1a1a2e', '#16213e', '#0f3460', '#e94560'],
-  gold: ['#ffd700', '#ffec8b', '#fff8dc', '#ffe4b5', '#ffff00'],
-  fire: ['#ff4500', '#ff6347', '#ff7f50', '#ffa500', '#ffff00'],
-  magic: ['#7c4dff', '#00ffff', '#ff4081', '#ffffff', '#e0d0ff'],
-  blood: ['#8b0000', '#dc143c', '#ff0000', '#b22222', '#800000'],
-  ice: ['#00ffff', '#7fffff', '#ffffff', '#e0ffff', '#b0e0e6'],
-  earth: ['#8b7355', '#a0522d', '#cd853f', '#d2b48c', '#f5deb3']
+  white: ['#F5F0E8', '#fff8dc', '#ffec8b', '#ffe4b5', '#fffacd'],
+  black: ['#2C2C2C', '#3D3020', '#4A3C2A', '#5C4A36', '#6B5344'],
+  gold: ['#B8960F', '#D4A820', '#F5F0E8', '#ffe4b5', '#E8DCCA'],
+  fire: ['#B84030', '#D46040', '#E88070', '#ffa500', '#D4A820'],
+  magic: ['#B8960F', '#8B7355', '#D4A820', '#F5F0E8', '#E8DCCA'],
+  blood: ['#8b0000', '#B84030', '#dc143c', '#b22222', '#800000'],
+  ice: ['#D4C4A8', '#C8B898', '#F5F0E8', '#E8DCCA', '#B8960F'],
+  earth: ['#8B7355', '#6B5344', '#a0522d', '#d2b48c', '#f5deb3']
 }

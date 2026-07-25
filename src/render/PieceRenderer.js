@@ -1,12 +1,17 @@
 import { Piece, Color } from '../core/ChessTypes.js'
 
 const PIECE_SYMBOLS = {
-  [Piece.KING]: 'k',
-  [Piece.QUEEN]: 'q',
-  [Piece.ROOK]: 'r',
-  [Piece.BISHOP]: 'b',
-  [Piece.KNIGHT]: 'n',
-  [Piece.PAWN]: 'p'
+  [Piece.KING]: 'king',
+  [Piece.QUEEN]: 'queen',
+  [Piece.ROOK]: 'rook',
+  [Piece.BISHOP]: 'bishop',
+  [Piece.KNIGHT]: 'knight',
+  [Piece.PAWN]: 'pawn'
+}
+
+const COLOR_NAMES = {
+  [Color.WHITE]: 'white',
+  [Color.BLACK]: 'black'
 }
 
 export class PieceRenderer {
@@ -25,14 +30,14 @@ export class PieceRenderer {
   }
 
   loadAllPieces() {
-    const pieceTypes = ['k', 'q', 'r', 'b', 'n', 'p']
-    const colors = ['w', 'b']
+    const pieceTypes = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn']
+    const colors = ['white', 'black']
 
     for (const color of colors) {
       for (const type of pieceTypes) {
-        const key = `${color}${type}`
+        const key = `${color}-${type}`
         const img = new Image()
-        img.src = `/assets/pieces/${key}.png`
+        img.src = `/assets/pieces/${key}.svg`
         this.pieceImages.set(key, img)
       }
     }
@@ -67,11 +72,11 @@ export class PieceRenderer {
   }
 
   drawPiece(ctx, piece, color, x, y, size) {
-    const symbol = PIECE_SYMBOLS[piece]
-    if (!symbol) return
+    const typeName = PIECE_SYMBOLS[piece]
+    if (!typeName) return
 
-    const colorPrefix = color === Color.WHITE ? 'w' : 'b'
-    const key = `${colorPrefix}${symbol}`
+    const colorName = color === Color.WHITE ? 'white' : 'black'
+    const key = `${colorName}-${typeName}`
     const img = this.pieceImages.get(key)
 
     if (img && img.complete && img.naturalWidth > 0) {

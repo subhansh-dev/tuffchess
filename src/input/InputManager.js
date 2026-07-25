@@ -43,15 +43,12 @@ export class InputManager extends EventBus {
 
     if (this.botMode && this.engine.getTurn() !== this.playerColor) return
 
+    // DPR FIX: Use CSS coordinates directly since CanvasRenderer uses ctx.setTransform
+    // for DPR scaling. The canvas internal dimensions include DPR, but setTransform
+    // already handles that. We just need CSS-pixel coordinates.
     const rect = this.canvas.getBoundingClientRect()
-    const scaleX = this.canvas.width / rect.width
-    const scaleY = this.canvas.height / rect.height
-    const canvasX = (e.clientX - rect.left) * scaleX
-    const canvasY = (e.clientY - rect.top) * scaleY
-
-    const dpr = window.devicePixelRatio || 1
-    const x = canvasX / dpr
-    const y = canvasY / dpr
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
 
     const { boardOffsetX, boardOffsetY, squareSize } = this.renderer.canvasRenderer
     const orientation = this.renderer.boardRenderer.boardAppearance.orientation
@@ -119,14 +116,20 @@ export class InputManager extends EventBus {
     }
 
     const pos = this.engine.getPosition()
-    const isCapture = pos.board[to] !== Piece.NONE
     const piece = pos.board[from]
     const color = pos.colors[from]
     const orientation = this.renderer.boardRenderer.boardAppearance.orientation
 
+    // Detect captures including en passant
+    // En passant: target square is empty but the captured pawn is on a different square
+    const isNormalCapture = pos.board[to] !== Piece.NONE
+    const isEnPassant = piece === Piece.PAWN && pos.board[to] === Piece.NONE &&
+      Math.abs((from % 8) - (to % 8)) === 1 && Math.abs(Math.floor(from / 8) - Math.floor(to / 8)) === 1
+    const isCapture = isNormalCapture || isEnPassant
+
     // Capture victim info BEFORE engine move changes the board
-    const victimPiece = isCapture ? pos.board[to] : 0
-    const victimColor = isCapture ? pos.colors[to] : 0
+    const victimPiece = isNormalCapture ? pos.board[to] : isEnPassant ? Piece.PAWN : 0
+    const victimColor = isNormalCapture ? pos.colors[to] : isEnPassant ? (color === 1 ? 2 : 1) : 0
 
     // Clear any leftover ghost pieces from previous animations
     this.renderer.pieceRenderer.ghostPiece = null

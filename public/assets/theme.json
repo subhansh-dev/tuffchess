@@ -1,27 +1,27 @@
 {
-  "name": "Stardance Default",
+  "name": "Artisan Parchment",
   "colors": {
-    "background": "#0a0a0f",
+    "background": "#F5F0E8",
     "board": {
-      "light": "#e8dcc8",
-      "dark": "#7d6b5a"
+      "light": "#E8D5B5",
+      "dark": "#8B7355"
     },
     "highlights": {
-      "move": "rgba(255, 215, 0, 0.35)",
-      "capture": "rgba(255, 60, 60, 0.45)",
-      "check": "rgba(255, 50, 50, 0.6)",
-      "lastMove": "rgba(255, 255, 100, 0.3)",
-      "selected": "rgba(100, 200, 255, 0.4)"
+      "move": "rgba(184, 150, 15, 0.35)",
+      "capture": "rgba(180, 60, 40, 0.45)",
+      "check": "rgba(200, 50, 40, 0.6)",
+      "lastMove": "rgba(184, 150, 15, 0.25)",
+      "selected": "rgba(139, 115, 85, 0.4)"
     },
     "pieces": {
-      "whiteStroke": "#1a1a2e",
-      "blackStroke": "#0a0a0f"
+      "whiteStroke": "#2C2C2C",
+      "blackStroke": "#1a1a1a"
     },
     "ui": {
-      "primary": "#ffd700",
-      "secondary": "#00d4ff",
-      "text": "#f0eae0",
-      "textDim": "#8b7d6b"
+      "primary": "#B8960F",
+      "secondary": "#8B7355",
+      "text": "#2C2C2C",
+      "textDim": "#6B5344"
     }
   }
 }

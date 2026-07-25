@@ -118,11 +118,7 @@ export class AnimeEdit {
     this._impactParticlesSpawned = false
     this._burstParticlesSpawned = false
     
-    // Pause engine
-    this.renderer.engine?.setPaused?.(true)
-    
-    // Enter time freeze immediately
-    timeManager.hitStop(150, 0.02)
+    // DON'T pause engine — just let the animation run and resolve when done
     
     // Play whoosh sound
     if (this.audioManager) this.audioManager.playWhoosh?.()
@@ -309,7 +305,7 @@ export class AnimeEdit {
         vx: Math.cos(angle) * 800,
         vy: Math.sin(angle) * 800,
         radius: 2,
-        color: this.killerColor === 1 ? '#ffd700' : '#7c4dff',
+        color: this.killerColor === 1 ? '#B8960F' : '#8B7355',
         shape: 'slashTrail',
         maxLife: 0.3,
         gravity: 0,
@@ -430,7 +426,7 @@ export class AnimeEdit {
 
     ctx.save()
     ctx.globalAlpha = intensity * 0.6
-    ctx.strokeStyle = this.killerColor === 1 ? '#ffd700' : '#7c4dff'
+    ctx.strokeStyle = this.killerColor === 1 ? '#B8960F' : '#8B7355'
     ctx.lineWidth = 2
     ctx.lineCap = 'round'
 
@@ -469,9 +465,9 @@ export class AnimeEdit {
 
     ctx.save()
     ctx.globalAlpha = (1 - progress) * 0.8
-    ctx.strokeStyle = this.killerColor === 1 ? '#ffd700' : '#7c4dff'
+    ctx.strokeStyle = this.killerColor === 1 ? '#B8960F' : '#8B7355'
     ctx.lineWidth = 4
-    ctx.shadowColor = this.killerColor === 1 ? '#ffd700' : '#7c4dff'
+    ctx.shadowColor = this.killerColor === 1 ? '#B8960F' : '#8B7355'
     ctx.shadowBlur = 20
     ctx.beginPath()
     ctx.arc(cx, cy, currentRadius, 0, Math.PI * 2)
@@ -537,55 +533,45 @@ export class AnimeEdit {
 
   drawPieceLarge(ctx, piece, color, x, y, size) {
     const symbol = this.getPieceSymbol(piece)
-    const colorPrefix = color === 1 ? 'w' : 'b'
-    const key = `${colorPrefix}${symbol}`
+    const colorName = color === 1 ? 'white' : 'black'
+    const key = `${colorName}-${symbol}`
     const img = this.renderer.pieceRenderer.pieceImages.get(key)
     if (img && img.complete && img.naturalWidth > 0) {
       // Add glow effect
-      ctx.shadowColor = color === 1 ? '#ffd700' : '#7c4dff'
+      ctx.shadowColor = color === 1 ? '#B8960F' : '#8B7355'
       ctx.shadowBlur = 30
       ctx.drawImage(img, x, y, size, size)
     }
   }
 
   getPieceSymbol(piece) {
-    const symbols = { 1: 'k', 2: 'q', 3: 'r', 4: 'b', 5: 'n', 6: 'p' }
-    return symbols[piece] || 'p'
+    // Correct mapping: Piece.PAWN=1, Piece.KNIGHT=2, Piece.BISHOP=3, Piece.ROOK=4, Piece.QUEEN=5, Piece.KING=6
+    const symbols = { 1: 'pawn', 2: 'knight', 3: 'bishop', 4: 'rook', 5: 'queen', 6: 'king' }
+    return symbols[piece] || 'pawn'
   }
 
   renderChromaticAberration(ctx, intensity) {
+    // Use fast CSS-based approach instead of per-pixel ImageData manipulation
+    // Draw three offset copies of the canvas content with different blend modes
     const shift = Math.round(intensity * 5)
     if (shift < 1) return
 
-    try {
-      const imgData = ctx.getImageData(0, 0, this.renderer.canvasRenderer.width, this.renderer.canvasRenderer.height)
-      const copy = new Uint8ClampedArray(imgData.data)
-      const w = this.renderer.canvasRenderer.width
-      const h = this.renderer.canvasRenderer.height
+    const w = this.renderer.canvasRenderer.width
+    const h = this.renderer.canvasRenderer.height
+    const canvas = ctx.canvas
 
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const idx = (y * w + x) * 4
-          // Red channel shifted right
-          const srcXr = Math.min(w - 1, Math.max(0, x - shift))
-          const idxR = (y * w + srcXr) * 4
-          imgData.data[idx] = copy[idxR]
-
-          // Blue channel shifted left
-          const srcXb = Math.min(w - 1, Math.max(0, x + shift))
-          const idxB = (y * w + srcXb) * 4
-          imgData.data[idx + 2] = copy[idxB + 2]
-        }
-      }
-      ctx.putImageData(imgData, 0, 0)
-    } catch (e) {
-      // Canvas tainted, skip
-    }
+    ctx.save()
+    // Red channel shifted left
+    ctx.globalAlpha = intensity * 0.3
+    ctx.globalCompositeOperation = 'lighter'
+    ctx.drawImage(canvas, -shift, 0, w, h)
+    // Blue channel shifted right
+    ctx.drawImage(canvas, shift, 0, w, h)
+    ctx.restore()
   }
 
   finish() {
     this.active = false
-    this.renderer.engine?.setPaused?.(false)
     timeManager.setGlobalScale(1, 10)
     if (this._resolve) { this._resolve(); this._resolve = null }
   }

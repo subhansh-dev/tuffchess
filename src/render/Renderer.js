@@ -12,7 +12,10 @@ export class Renderer {
     this.height = canvasRenderer.height
 
     this.particleSystem = new ParticleSystem()
+    this.animationManager = null
   }
+
+  setAnimationManager(am) { this.animationManager = am }
 
   resize(width, height) {
     this.width = width
@@ -52,6 +55,11 @@ export class Renderer {
       this.renderCaptureEffects(ctx, captureEffects)
     }
 
+    // ANIME: Render manga-style speed lines from animation manager
+    if (this.animationManager && this.animationManager.renderSpeedLines) {
+      this.animationManager.renderSpeedLines(ctx)
+    }
+
     if (camera && camera.isActive) {
       camera.restoreTransform(ctx)
     }
@@ -70,12 +78,35 @@ export class Renderer {
   }
 
   renderBackground(ctx, width, height) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, height)
-    gradient.addColorStop(0, '#1a1a2e')
-    gradient.addColorStop(0.5, '#16213e')
-    gradient.addColorStop(1, '#0f0f23')
+    // Warm aged paper/burlap background — like sitting on a rich wooden desk
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
+    gradient.addColorStop(0, '#4A3C2A')
+    gradient.addColorStop(0.3, '#3D3020')
+    gradient.addColorStop(0.7, '#352A1C')
+    gradient.addColorStop(1, '#2E2418')
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
+
+    // Add subtle warm light spots to simulate ambient light on a wooden surface
+    ctx.globalAlpha = 0.06
+    const lightGradient1 = ctx.createRadialGradient(
+      width * 0.3, height * 0.3, 0,
+      width * 0.3, height * 0.3, width * 0.5
+    )
+    lightGradient1.addColorStop(0, '#8B7355')
+    lightGradient1.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = lightGradient1
+    ctx.fillRect(0, 0, width, height)
+
+    const lightGradient2 = ctx.createRadialGradient(
+      width * 0.7, height * 0.6, 0,
+      width * 0.7, height * 0.6, width * 0.4
+    )
+    lightGradient2.addColorStop(0, '#A89070')
+    lightGradient2.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = lightGradient2
+    ctx.fillRect(0, 0, width, height)
+    ctx.globalAlpha = 1
   }
 
   renderStaticPieces(engine, captureEffects) {
@@ -189,7 +220,8 @@ export class Renderer {
       const alpha = t * 0.12
 
       ctx.globalAlpha = alpha
-      ctx.strokeStyle = '#ffffff'
+      // Warm gold trail color instead of white
+      ctx.strokeStyle = '#B8960F'
       ctx.lineWidth = 4 * t
       ctx.lineCap = 'round'
       ctx.beginPath()
@@ -223,8 +255,8 @@ export class Renderer {
 
     if (effects.flashAlpha > 0.01) {
       ctx.save()
-      ctx.globalAlpha = effects.flashAlpha * 0.2
-      ctx.fillStyle = '#fff'
+      ctx.globalAlpha = effects.flashAlpha * 0.15
+      ctx.fillStyle = '#F5F0E8'
       ctx.fillRect(0, 0, this.width, this.height)
       ctx.restore()
     }
@@ -234,9 +266,9 @@ export class Renderer {
       const ringWidth = pieceSize * 0.12 * (1 - effects.ringProgress)
       ctx.save()
       ctx.globalAlpha = (1 - effects.ringProgress) * 0.8
-      ctx.strokeStyle = '#ffd700'
+      ctx.strokeStyle = '#B8960F'
       ctx.lineWidth = ringWidth
-      ctx.shadowColor = '#ffd700'
+      ctx.shadowColor = '#B8960F'
       ctx.shadowBlur = 12
       ctx.beginPath()
       ctx.arc(cx, cy, ringR, 0, Math.PI * 2)
@@ -296,7 +328,7 @@ export class Renderer {
         this.width / 2, this.height / 2, Math.max(this.width, this.height)
       )
       gradient.addColorStop(0, 'rgba(0,0,0,0)')
-      gradient.addColorStop(1, `rgba(0,0,0,${effects.vignette * 0.5})`)
+      gradient.addColorStop(1, `rgba(30,20,10,${effects.vignette * 0.5})`)
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, this.width, this.height)
       ctx.restore()
@@ -308,7 +340,7 @@ export class Renderer {
 
     ctx.save()
     ctx.font = '12px monospace'
-    ctx.fillStyle = '#0f0'
+    ctx.fillStyle = '#B8960F'
     ctx.fillText(`Ghost pieces: ${ghostPieces.filter(g => g?.visible).length}`, 10, 20)
     ctx.fillText(`Trails: ${trails.length}`, 10, 35)
     ctx.restore()

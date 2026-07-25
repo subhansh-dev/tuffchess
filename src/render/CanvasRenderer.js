@@ -20,7 +20,8 @@ export class CanvasRenderer {
   }
 
   clear() {
-    this.ctx.fillStyle = '#262522'
+    // Warm wooden background instead of dark
+    this.ctx.fillStyle = '#4A3C2A'
     this.ctx.fillRect(0, 0, this.width, this.height)
   }
 

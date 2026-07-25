@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stardance Chess</title>
+  <title>TuffChess</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,10 +15,10 @@
     <div id="capture-flash"></div>
   </div>
 
-  <!-- Loading Screen -->
+  <!-- Loading Screen — feels like unrolling an old scroll -->
   <div id="loading-screen">
-    <div class="loading-title">Stardance Chess</div>
-    <p class="loading-subtitle">Initializing cinematic experience...</p>
+    <div class="loading-title">TuffChess</div>
+    <p class="loading-subtitle">Preparing the board...</p>
     <div class="loading-bar-container">
       <div class="loading-bar"></div>
     </div>
@@ -32,17 +32,17 @@
       <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="loadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#ffd700" />
-            <stop offset="100%" style="stop-color:#b8860b" />
+            <stop offset="0%" style="stop-color:#B8960F" />
+            <stop offset="100%" style="stop-color:#8B7355" />
           </linearGradient>
         </defs>
-        <path d="M64 8 C64 8 80 20 76 40 L72 70 C72 90 56 90 56 70 L52 40 C48 20 64 8 64 8 Z" fill="url(#loadGrad)" stroke="#1a1a2e" stroke-width="3"/>
-        <path d="M60 25 C60 25 68 30 64 45 C60 30 60 25 60 25 Z" fill="#fff8dc" opacity="0.8"/>
-        <circle cx="64" cy="100" r="28" fill="url(#loadGrad)" opacity="0.8"/>
+        <path d="M64 8 C64 8 80 20 76 40 L72 70 C72 90 56 90 56 70 L52 40 C48 20 64 8 64 8 Z" fill="url(#loadGrad)" stroke="#2C2C2C" stroke-width="3"/>
+        <path d="M60 25 C60 25 68 30 64 45 C60 30 60 25 60 25 Z" fill="#F5F0E8" opacity="0.6"/>
+        <circle cx="64" cy="100" r="28" fill="url(#loadGrad)" opacity="0.7"/>
       </svg>
     </div>
-    <h1 class="menu-title">Stardance Chess</h1>
-    <p class="menu-subtitle">Play chess with cinematic flair</p>
+    <h1 class="menu-title">TuffChess</h1>
+    <p class="menu-subtitle">where every capture is a duel</p>
 
     <div class="menu-buttons">
       <button class="btn btn-primary" data-action="play">
@@ -161,7 +161,7 @@
 
   <!-- Game HUD -->
   <div id="game-hud" class="screen">
-    <!-- Top player (opponent) -->
+    <!-- Top player (opponent) — brass-framed label -->
     <div class="player-bar top">
       <div class="player-avatar">B</div>
       <div class="player-info">
@@ -176,7 +176,7 @@
       </div>
     </div>
 
-    <!-- Bottom player (human) -->
+    <!-- Bottom player (human) — brass-framed label -->
     <div class="player-bar bottom active">
       <div class="player-avatar">Y</div>
       <div class="player-info">
@@ -214,7 +214,7 @@
     </div>
   </div>
 
-  <!-- Game Over Modal -->
+  <!-- Game Over Modal — like lifting a flap on an old leather-bound box -->
   <div id="game-over-modal" class="screen">
     <div class="game-over-card">
       <div class="game-over-result">Checkmate</div>
@@ -228,15 +228,15 @@
     </div>
   </div>
 
-  <!-- Promotion Modal -->
+  <!-- Promotion Modal — leather-bound box flap -->
   <div id="promotion-modal" class="screen">
     <div class="promotion-card">
       <div class="promotion-title">Promote Pawn</div>
       <div class="promotion-pieces">
-        <div class="promotion-piece" data-piece="q"><img src="/assets/pieces/wq.png" alt="Queen"></div>
-        <div class="promotion-piece" data-piece="r"><img src="/assets/pieces/wr.png" alt="Rook"></div>
-        <div class="promotion-piece" data-piece="b"><img src="/assets/pieces/wb.png" alt="Bishop"></div>
-        <div class="promotion-piece" data-piece="n"><img src="/assets/pieces/wn.png" alt="Knight"></div>
+        <div class="promotion-piece" data-piece="q"><img src="/assets/pieces/white-queen.svg" alt="Queen"></div>
+        <div class="promotion-piece" data-piece="r"><img src="/assets/pieces/white-rook.svg" alt="Rook"></div>
+        <div class="promotion-piece" data-piece="b"><img src="/assets/pieces/white-bishop.svg" alt="Bishop"></div>
+        <div class="promotion-piece" data-piece="n"><img src="/assets/pieces/white-knight.svg" alt="Knight"></div>
       </div>
     </div>
   </div>

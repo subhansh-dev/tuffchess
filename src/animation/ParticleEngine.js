@@ -3,7 +3,7 @@ import { MathUtils } from '../utils/MathUtils.js';
 export const ParticlePresets = {
   sparks: {
     count: 30,
-    colors: ['#ffd700', '#fff8dc', '#ffec8b', '#ffffe0'],
+    colors: ['#B8960F', '#F5F0E8', '#D4A820', '#E8DCCA'],
     size: { min: 1.5, max: 4 },
     speed: { min: 200, max: 600 },
     gravity: 300,
@@ -15,7 +15,7 @@ export const ParticlePresets = {
 
   embers: {
     count: 25,
-    colors: ['#ff6b35', '#ff8c00', '#ffa500', '#ffd700', '#ffffff'],
+    colors: ['#ff6b35', '#ff8c00', '#ffa500', '#B8960F', '#F5F0E8'],
     size: { min: 2, max: 5 },
     speed: { min: 50, max: 250 },
     gravity: 150,
@@ -53,7 +53,7 @@ export const ParticlePresets = {
 
   lightFragments: {
     count: 35,
-    colors: ['#00ffff', '#7c4dff', '#ff4081', '#ffd700', '#ffffff'],
+    colors: ['#D4A820', '#8B7355', '#B8960F', '#B8960F', '#F5F0E8'],
     size: { min: 1, max: 3 },
     speed: { min: 150, max: 500 },
     gravity: 100,
@@ -66,7 +66,7 @@ export const ParticlePresets = {
 
   energyShards: {
     count: 20,
-    colors: ['#00ffff', '#7c4dff', '#ff4081', '#ffffff'],
+    colors: ['#D4A820', '#8B7355', '#B8960F', '#F5F0E8'],
     size: { min: 3, max: 8 },
     speed: { min: 200, max: 800 },
     gravity: 200,
@@ -92,7 +92,7 @@ export const ParticlePresets = {
 
   slashLines: {
     count: 8,
-    colors: ['#ffffff', '#00ffff', '#ff4081'],
+    colors: ['#F5F0E8', '#D4A820', '#B8960F'],
     size: { min: 60, max: 120 },
     speed: { min: 0, max: 0 },
     gravity: 0,
@@ -105,7 +105,7 @@ export const ParticlePresets = {
 
   crownBurst: {
     count: 24,
-    colors: ['#ffd700', '#fff8dc', '#ffec8b', '#ffffe0', '#ffffff'],
+    colors: ['#B8960F', '#F5F0E8', '#D4A820', '#E8DCCA', '#F5F0E8'],
     size: { min: 4, max: 8 },
     speed: { min: 200, max: 500 },
     gravity: 250,
@@ -145,7 +145,7 @@ export const ParticlePresets = {
 
   plasmaBurst: {
     count: 40,
-    colors: ['#ffd700', '#ff6b35', '#ff4081', '#ffffff'],
+    colors: ['#B8960F', '#ff6b35', '#B84030', '#F5F0E8'],
     size: { min: 2, max: 6 },
     speed: { min: 150, max: 500 },
     gravity: 200,
@@ -159,7 +159,7 @@ export const ParticlePresets = {
 
   electricBurst: {
     count: 25,
-    colors: ['#00ffff', '#7c4dff', '#ffffff'],
+    colors: ['#D4A820', '#8B7355', '#F5F0E8'],
     size: { min: 1, max: 3 },
     speed: { min: 300, max: 800 },
     gravity: 0,
@@ -186,7 +186,7 @@ export const ParticlePresets = {
 
   impactSparks: {
     count: 50,
-    colors: ['#ffd700', '#ffec8b', '#ffffff', '#ff6b35'],
+    colors: ['#B8960F', '#D4A820', '#F5F0E8', '#ff6b35'],
     size: { min: 1, max: 3 },
     speed: { min: 200, max: 700 },
     gravity: 350,
@@ -199,7 +199,7 @@ export const ParticlePresets = {
 
   debrisShard: {
     count: 30,
-    colors: ['#ffd700', '#ff6b35', '#ff4081', '#7c4dff', '#e8e8e8'],
+    colors: ['#B8960F', '#ff6b35', '#B84030', '#8B7355', '#E8DCCA'],
     size: { min: 3, max: 7 },
     speed: { min: 100, max: 400 },
     gravity: 280,
@@ -213,7 +213,7 @@ export const ParticlePresets = {
 
   risingEmber: {
     count: 20,
-    colors: ['#ff6b35', '#ffa500', '#ffd700', '#ffffff'],
+    colors: ['#ff6b35', '#ffa500', '#B8960F', '#F5F0E8'],
     size: { min: 1, max: 3 },
     speed: { min: 30, max: 80 },
     gravity: -60,
@@ -271,7 +271,7 @@ export const ParticlePresets = {
 
   soulRelease: {
     count: 30,
-    colors: ['#ffffff', '#e8f0ff', '#c0d8ff', '#ffd700', '#fff8dc'],
+    colors: ['#F5F0E8', '#E8DCCA', '#D4C4A8', '#B8960F', '#fff8dc'],
     size: { min: 2, max: 6 },
     speed: { min: 20, max: 100 },
     gravity: -80,
@@ -286,7 +286,7 @@ export const ParticlePresets = {
 
   bladeSlash: {
     count: 15,
-    colors: ['#ffffff', '#ffd700', '#ff4444', '#00ffff'],
+    colors: ['#F5F0E8', '#B8960F', '#B84030', '#D4A820'],
     size: { min: 30, max: 60 },
     speed: { min: 0, max: 0 },
     gravity: 0,
@@ -300,7 +300,7 @@ export const ParticlePresets = {
 
   impactBurst: {
     count: 50,
-    colors: ['#ffd700', '#ff6b35', '#ffffff', '#ff1a1a', '#ff8800'],
+    colors: ['#B8960F', '#ff6b35', '#F5F0E8', '#B84030', '#ff8800'],
     size: { min: 2, max: 8 },
     speed: { min: 300, max: 1200 },
     gravity: 400,
@@ -344,7 +344,7 @@ export const ParticlePresets = {
 
   holyLight: {
     count: 45,
-    colors: ['#fff8dc', '#ffd700', '#ffffe0', '#ffffff', '#ffe4b5'],
+    colors: ['#fff8dc', '#B8960F', '#E8DCCA', '#F5F0E8', '#ffe4b5'],
     size: { min: 2, max: 7 },
     speed: { min: 100, max: 600 },
     gravity: -30,

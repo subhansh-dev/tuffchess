@@ -48,7 +48,7 @@ export class GhostPiece {
   drawTrail(ctx, color) {
     if (this.trail.length < 2) return
 
-    const trailColor = color === 1 ? '#ffffff' : '#222222'
+    const trailColor = color === 1 ? '#F5F0E8' : '#2C2C2C'
 
     ctx.save()
     ctx.globalCompositeOperation = 'source-over'

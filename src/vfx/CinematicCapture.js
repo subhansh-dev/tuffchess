@@ -155,12 +155,7 @@ export class CinematicCapture {
 
     // ═══ LAUNCH (45ms) ═══
     addFn(() => {
-      const orientation = this.renderer.boardRenderer.boardAppearance.orientation
-      this.renderer.pieceRenderer.startCaptureAnimation(
-        this.captureData.from, this.captureData.to,
-        this.captureData.piece, this.captureData.color || 1,
-        orientation, 0.13
-      )
+      // Piece animation is handled by AnimationManager, not PieceRenderer directly
       if (this.audioManager) this.audioManager.playWhoosh?.()
     }, 0.045)
 
@@ -201,14 +196,15 @@ export class CinematicCapture {
 
     addFn(() => {
       if (this.audioManager) this.audioManager.playExplosion?.()
-      // Spawn particles at impact point - use assassination presets based on piece color
-      if (this.renderer?.particleEngine) {
+      // Spawn particles via AnimationManager's particle engine
+      const particleEngine = this.renderer?.animationManager?.particleEngine
+      if (particleEngine) {
         const isWhite = (this.captureData?.color || 1) === 1
-        this.renderer.particleEngine.emit('assassination', cx, cy, { count: 60 }, 'foreground')
-        this.renderer.particleEngine.emit('impactBurst', cx, cy, { count: 50 }, 'foreground')
-        this.renderer.particleEngine.emit('executionFlash', cx, cy, {}, 'foreground')
-        this.renderer.particleEngine.emit(isWhite ? 'holyLight' : 'darkEnergy', cx, cy, { count: 40 }, 'foreground')
-        this.renderer.particleEngine.emit('staggerRings', cx, cy, {}, 'foreground')
+        particleEngine.emit('assassination', cx, cy, { count: 60 }, 'foreground')
+        particleEngine.emit('impactBurst', cx, cy, { count: 50 }, 'foreground')
+        particleEngine.emit('executionFlash', cx, cy, {}, 'foreground')
+        particleEngine.emit(isWhite ? 'holyLight' : 'darkEnergy', cx, cy, { count: 40 }, 'foreground')
+        particleEngine.emit('staggerRings', cx, cy, {}, 'foreground')
       }
     }, 0.23)
 
@@ -416,9 +412,9 @@ export class CinematicCapture {
   renderCracks(ctx, cx, cy, squareSize, progress) {
     ctx.save()
     ctx.globalAlpha = progress * 0.75
-    ctx.strokeStyle = '#ffd700'
+    ctx.strokeStyle = '#B8960F'
     ctx.lineWidth = 1.4
-    ctx.shadowColor = '#ffd700'
+    ctx.shadowColor = '#B8960F'
     ctx.shadowBlur = 4
     const r = squareSize * 0.32 * progress
     // Deterministic crack pattern

@@ -186,7 +186,30 @@ export class ChessEngine extends EventBus {
     })
   }
 
-  isInCheck(color) {
+  isInCheck(color = null) {
+    // If color is specified, check if that specific color's king is in check
+    // Otherwise check if the current turn's side is in check
+    if (color !== null) {
+      // Temporarily check the specified color
+      const turn = this.chess.turn()
+      const targetColor = color === 1 || color === Color.WHITE ? 'w' : 'b'
+      if (turn === targetColor) {
+        return this.chess.inCheck()
+      }
+      // For the non-current turn, we need to check if their king is attacked
+      // This means checking if the current turn's pieces attack the enemy king
+      // chess.js doesn't support this directly, so we check the FEN
+      const fen = this.chess.fen()
+      const tempChess = new Chess(fen)
+      // Flip the turn to the target color
+      const modifiedFen = fen.replace(/ [w|b] /, ` ${targetColor} `)
+      try {
+        tempChess.load(modifiedFen)
+        return tempChess.inCheck()
+      } catch {
+        return false
+      }
+    }
     return this.chess.inCheck()
   }
 

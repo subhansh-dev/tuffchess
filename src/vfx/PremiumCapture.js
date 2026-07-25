@@ -36,15 +36,15 @@ const Easing = {
 }
 
 const Colors = {
-  coreWhite: '#ffffff',
+  coreWhite: '#F5F0E8',
   warmOrange: '#ff8c00',
   goldenOrange: '#ffa500',
-  brightGold: '#ffd700',
-  softGold: '#ffe4b5',
-  paleGold: '#fff8dc',
+  brightGold: '#B8960F',
+  softGold: '#D4A820',
+  paleGold: '#E8DCCA',
   emberOrange: '#ff6b00',
   deepOrange: '#e85d00',
-  softWhite: '#fffaf0'
+  softWhite: '#F5F0E8'
 }
 
 const seededRandom = (seed) => {
@@ -425,7 +425,7 @@ export class PremiumCapture {
         size: 1.5 + Math.random() * 2,
         alpha: 1,
         life: 0.4 + Math.random() * 0.2,
-        color: ['#ff8c00', '#ffa500', '#ffd700', '#fff8dc', '#ffffff'][Math.floor(Math.random() * 5)],
+        color: ['#ff8c00', '#ffa500', '#B8960F', '#fff8dc', '#ffffff'][Math.floor(Math.random() * 5)],
         gravity: 100 + Math.random() * 80,
         rotation: angle,
         rotationSpeed: (Math.random() - 0.5) * 15
@@ -472,7 +472,7 @@ export class PremiumCapture {
         gravity: 150 + Math.random() * 100,
         drag: 0.99,
         scale: 1,
-        color: this.attackerColor === 1 ? '#ffd700' : '#e85d00'
+        color: this.attackerColor === 1 ? '#B8960F' : '#e85d00'
       })
     }
 
@@ -486,7 +486,7 @@ export class PremiumCapture {
         size: 1 + Math.random() * 2,
         alpha: 1,
         life: 0.5 + Math.random() * 0.4,
-        color: ['#ff8c00', '#ffa500', '#ffd700', '#fff8dc'][Math.floor(Math.random() * 4)],
+        color: ['#ff8c00', '#ffa500', '#B8960F', '#fff8dc'][Math.floor(Math.random() * 4)],
         gravity: 80 + Math.random() * 60,
         drag: 0.97
       })
@@ -597,10 +597,10 @@ export class PremiumCapture {
         const curr = s.moveTrail[i]
         const alpha = t * 0.18 * s.pieceGlowPulse
         ctx.globalAlpha = alpha
-        ctx.strokeStyle = this.attackerColor === 1 ? '#ffd700' : '#e85d00'
+        ctx.strokeStyle = this.attackerColor === 1 ? '#B8960F' : '#e85d00'
         ctx.lineWidth = pieceSize * 0.12 * t
         ctx.lineCap = 'round'
-        ctx.shadowColor = this.attackerColor === 1 ? '#ffd700' : '#e85d00'
+        ctx.shadowColor = this.attackerColor === 1 ? '#B8960F' : '#e85d00'
         ctx.shadowBlur = 6 * t
         ctx.beginPath()
         ctx.moveTo(prev.x, prev.y)
@@ -687,9 +687,9 @@ export class PremiumCapture {
       const waveWidth = pieceSize * 0.15 * (1 - s.shockwave)
       ctx.save()
       ctx.globalAlpha = (1 - s.shockwave) * 0.6
-      ctx.strokeStyle = '#ffd700'
+      ctx.strokeStyle = '#B8960F'
       ctx.lineWidth = waveWidth
-      ctx.shadowColor = '#ffd700'
+      ctx.shadowColor = '#B8960F'
       ctx.shadowBlur = 8
       ctx.beginPath()
       ctx.arc(cx, cy, waveR, 0, Math.PI * 2)

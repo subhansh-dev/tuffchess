@@ -15,6 +15,7 @@ class MoveGenerator {
     const promoRank = turn === Color.WHITE ? 7 : 0
 
     this.pinned = new Uint8Array(64)
+    this.pinDirection = new Int8Array(64)  // Store direction from king to attacker
     this.computePins(position, turn)
 
     for (let sq = 0; sq < 64; sq++) {
@@ -39,18 +40,36 @@ class MoveGenerator {
     
     const enemyColor = color === Color.WHITE ? Color.BLACK : Color.WHITE
     
+    // Diagonal pin directions
     for (const dir of BISHOP_DIRS) {
       let sq = kingSq + dir
       let pinnedSq = -1
-      while (isValidSquare(sq) && sameFile(sq - dir, sq)) {
+      while (isValidSquare(sq)) {
+        // Check board edge wrapping for diagonal moves
+        const prevSq = sq - dir
+        const prevFile = prevSq % 8
+        const prevRank = Math.floor(prevSq / 8)
+        const currFile = sq % 8
+        const currRank = Math.floor(sq / 8)
+        if (Math.abs(currFile - prevFile) !== 1 || Math.abs(currRank - prevRank) !== 1) break
+        
         const piece = position.board[sq]
         const pc = position.colors[sq]
         if (piece !== Piece.NONE) {
           if (pc === color && pinnedSq === -1) {
             pinnedSq = sq
+            // Store pin direction: the direction FROM king TO pinning attacker
+            this.pinned[pinnedSq] = 1
+            this.pinDirection[pinnedSq] = dir
           } else {
             if (pc === enemyColor && (piece === Piece.BISHOP || piece === Piece.QUEEN)) {
-              if (pinnedSq !== -1) this.pinned[pinnedSq] = 1
+              // Valid pin — pin direction is already set
+            } else {
+              // Pinned piece blocked by friendly piece, or attacker is wrong piece type
+              if (pinnedSq !== -1) {
+                this.pinned[pinnedSq] = 0
+                this.pinDirection[pinnedSq] = 0
+              }
             }
             break
           }
@@ -59,21 +78,33 @@ class MoveGenerator {
       }
     }
 
+    // Straight pin directions (rook/queen)
     for (const dir of ROOK_DIRS) {
       let sq = kingSq + dir
       let pinnedSq = -1
       while (isValidSquare(sq)) {
+        // Check board edge wrapping for straight moves
         if (dir === -1 || dir === 1) {
           if (!sameRank(sq, sq - dir)) break
+        }
+        if (dir === -8 || dir === 8) {
+          if (!sameFile(sq, sq - dir)) break
         }
         const piece = position.board[sq]
         const pc = position.colors[sq]
         if (piece !== Piece.NONE) {
           if (pc === color && pinnedSq === -1) {
             pinnedSq = sq
+            this.pinned[pinnedSq] = 1
+            this.pinDirection[pinnedSq] = dir
           } else {
             if (pc === enemyColor && (piece === Piece.ROOK || piece === Piece.QUEEN)) {
-              if (pinnedSq !== -1) this.pinned[pinnedSq] = 1
+              // Valid pin
+            } else {
+              if (pinnedSq !== -1) {
+                this.pinned[pinnedSq] = 0
+                this.pinDirection[pinnedSq] = 0
+              }
             }
             break
           }
@@ -117,7 +148,10 @@ class MoveGenerator {
       const target = sq + offset
       const targetRank = Math.floor(target / 8)
       if (!isValidSquare(target)) continue
-      if (!sameFile(sq, target) && sameRank(sq, target - offset)) continue
+      // Validate the target is one file away from the pawn (diagonal move)
+      const sqFile = sq % 8
+      const targetFile = target % 8
+      if (Math.abs(sqFile - targetFile) !== 1) continue
       const targetPiece = position.board[target]
       if (targetPiece !== Piece.NONE && position.colors[target] === enemyColor && canMoveDiag) {
         if (targetRank === promoRank) {
@@ -153,16 +187,40 @@ class MoveGenerator {
   }
 
   isMoveAlongPin(sq, dir) {
-    return this.pinned[sq] === 0
+    // If piece is not pinned, any direction is allowed
+    if (this.pinned[sq] === 0) return true
+    // If piece IS pinned, only moves along the pin axis are allowed
+    const pinDir = this.pinDirection[sq]
+    // A move is along the pin if its direction is the same or opposite as the pin
+    // Pin direction goes from king toward the attacker
+    // Move direction must go either toward the attacker or back toward the king
+    return dir === pinDir || dir === -pinDir
   }
 
   generateSlidingMoves(position, sq, moves, turn, enemyColor, dirs) {
+    const isPinned = this.pinned[sq] === 1
+    const pinDir = this.pinDirection[sq]
+    
     for (const dir of dirs) {
+      // If pinned, only allow moves along the pin axis
+      if (isPinned && dir !== pinDir && dir !== -pinDir) continue
+      
       let target = sq + dir
       while (isValidSquare(target)) {
-        if ((dir === -1 || dir === 1) && !sameRank(target, target - dir)) break
-        if ((dir === -8 || dir === 8) && !sameFile(target, target - dir)) break
-        if ((dir === -9 || dir === 7 || dir === -7 || dir === 9) && !sameFile(target, target - dir) && !sameRank(target, target - dir)) break
+        // Validate board edge wrapping
+        const prevFile = (target - dir) % 8
+        const currFile = target % 8
+        const prevRank = Math.floor((target - dir) / 8)
+        const currRank = Math.floor(target / 8)
+        
+        // Horizontal moves must stay on same rank
+        if ((dir === -1 || dir === 1) && currRank !== prevRank) break
+        // Vertical moves must stay on same file
+        if ((dir === -8 || dir === 8) && currFile !== prevFile) break
+        // Diagonal moves must change both rank and file by exactly 1
+        if (Math.abs(dir) === 7 || Math.abs(dir) === 9) {
+          if (Math.abs(currFile - prevFile) !== 1 || Math.abs(currRank - prevRank) !== 1) break
+        }
         
         const piece = position.board[target]
         const pc = position.colors[target]

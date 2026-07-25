@@ -71,8 +71,11 @@ class Game {
     this.resize()
     window.addEventListener('resize', () => this.resize())
 
+    this.ui.showLoading(10, 'Initializing...')
+
     this.engine = new ChessEngine()
     this.engine.init()
+    this.ui.showLoading(20, 'Setting up board...')
 
     const canvasRenderer = new CanvasRenderer(this.ctx, window.innerWidth, window.innerHeight)
     const pieceRenderer = new PieceRenderer(canvasRenderer)
@@ -81,6 +84,8 @@ class Game {
     this.renderer = new Renderer(canvasRenderer, pieceRenderer, boardRenderer)
 
     this.renderer.pieceRenderer.setEngineRef(this.engine)
+
+    this.ui.showLoading(25, 'Loading assets...')
 
     this.animationManager = new AnimationManager(
       this.renderer.canvasRenderer,
@@ -92,6 +97,9 @@ class Game {
     )
 
     this.input = new InputManager(this.canvas, this.engine, this.renderer, this.animationManager)
+
+    // Connect animation manager to renderer for speed line rendering
+    this.renderer.setAnimationManager(this.animationManager)
 
     this.postProcessing = new PostProcessing(window.innerWidth, window.innerHeight)
 
@@ -120,25 +128,49 @@ class Game {
     })
     this.engine.on('check', () => {
       this.audio.playCheck()
-      // Red flash on check (no camera pan — that breaks click coords)
-      
-      setTimeout(() => { }, 1500)
+      // Anime camera zoom for check
+      const pos = this.engine.getPosition()
+      const kingSq = this.findKing(pos, this.engine.getTurn())
+      if (kingSq >= 0) {
+        const orientation = this.renderer.boardRenderer.boardAppearance.orientation
+        this.animationManager.zoomToKing(kingSq, orientation, 0.8)
+        setTimeout(() => { this.animationManager.resetCameraView() }, 1500)
+      }
     })
     this.engine.on('gameover', (gameOver) => {
       this.audio.playGameOver()
       if (gameOver && gameOver.result === 'checkmate') {
-        // Red vignette + flash on checkmate (no camera pan)
-        
+        const pos = this.engine.getPosition()
+        const kingSq = this.findKing(pos, this.engine.getTurn())
+        if (kingSq >= 0) {
+          const orientation = this.renderer.boardRenderer.boardAppearance.orientation
+          this.animationManager.zoomToKing(kingSq, orientation, 1.5)
+          setTimeout(() => { this.animationManager.resetCameraView() }, 2500)
         }
+      }
     })
+
+    // Clock timeout handler
+    this.clock.onFlag = (side) => {
+      if (!this.gameActive) return
+      const winner = side === 'white' ? 'black' : 'white'
+      this.endGame({ result: 'timeout', winner })
+    }
 
     const initAudioOnClick = async () => {
       await this.audio.init()
     }
     this.canvas.addEventListener('click', initAudioOnClick, { once: true })
 
-    this.ui.showLoading(30, 'Loading Stockfish...')
-    await this.bot.init()
+    this.ui.showLoading(30, 'Loading engine...')
+    try {
+      await Promise.race([
+        this.bot.init(),
+        new Promise((resolve) => setTimeout(resolve, 15000))
+      ])
+    } catch (err) {
+      console.warn('Stockfish init failed or timed out, continuing without bot:', err)
+    }
 
     this.setupUIEvents()
     this.setupInputEvents()
@@ -298,9 +330,17 @@ class Game {
     if (mode === 'bot') {
       this.input.setBotMode(true, this.playerColor)
       this.input.setInputEnabled(true)
+      // Update player bar with actual ELO values
+      const playerElo = this.elo.getRating('bot')
+      const botElo = DIFFICULTY_ELO[this.botDifficulty] || 800
+      const botName = DIFFICULTY_NAMES[this.botDifficulty] || 'Bot'
+      this.ui.updatePlayerBar('top', botName, botElo, false)
+      this.ui.updatePlayerBar('bottom', 'You', playerElo, this.playerColor === 1)
       // Reset Stockfish state for new game
-      this.bot.sendCommand('ucinewgame')
-      this.bot.sendCommand('isready')
+      if (this.bot.ready) {
+        this.bot.sendCommand('ucinewgame')
+        this.bot.sendCommand('isready')
+      }
       if (this.playerColor === 2) {
         this.makeBotMove()
       }
@@ -425,6 +465,13 @@ loop(time) {
     this.timeController.update(rawDt)
     const scaledDt = this.timeController.getScaledDelta(rawDt)
 
+    // Tick clock every frame for smooth continuous updates
+    if (this.gameActive && this.clock.running && this.timeControl > 0) {
+      this.clock.updateFromLoop(rawDt)
+      this.updateClockDisplay('white')
+      this.updateClockDisplay('black')
+    }
+
     this._accumulator = (this._accumulator || 0) + rawDt
     const FIXED_DT = 1 / 60
     const MAX_SUBSTEPS = 4
@@ -454,26 +501,25 @@ loop(time) {
     )
 
     if (this.postProcessing) {
-      const camTransform = this.animationManager.getCamera?.()
-      if (camTransform) {
-        if (camTransform.chromaticAberration > 0.01) {
-          this.postProcessing.setChromatic(camTransform.chromaticAberration, 0)
-        }
-        if (camTransform.vignette > 0.01) {
-          this.postProcessing.setVignette(camTransform.vignette)
-        }
-        if (camTransform.screenFlash?.alpha > 0.01) {
-          this.postProcessing.setScreenFlash(camTransform.screenFlash.color, camTransform.screenFlash.alpha)
-        }
-        if (camTransform.colorGrade) {
-          this.postProcessing.setColorGrade(
-            camTransform.colorGrade.contrast,
-            camTransform.colorGrade.saturation,
-            camTransform.colorGrade.brightness
-          )
-        }
+      const hasActiveAnim = this.animationManager.captureEffect && !this.animationManager.captureEffect.finished
+      const cam = this.animationManager.getCamera?.()
+      const hasActiveCamera = cam && cam.isActive
+      if (hasActiveAnim || hasActiveCamera) {
+        this.postProcessing._forceRender = true
+      }
+      if (cam) {
+        this.postProcessing.setChromatic(cam.chromaticAberration > 0.01 ? cam.chromaticAberration : 0, 0)
+        this.postProcessing.setVignette(cam.vignette > 0.01 ? cam.vignette : 0)
+        this.postProcessing.setScreenFlash(cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.color : [255,255,255], cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.alpha : 0)
+        this.postProcessing.setColorGrade(cam.colorGrade?.contrast || 0, cam.colorGrade?.saturation || 0, cam.colorGrade?.brightness || 0)
+      } else {
+        this.postProcessing.setChromatic(0, 0)
+        this.postProcessing.setVignette(0)
+        this.postProcessing.setScreenFlash([255,255,255], 0)
+        this.postProcessing.setColorGrade(0, 0, 0)
       }
       this.postProcessing.render(this.ctx)
+      this.postProcessing._forceRender = false
     }
 
     if (this.renderer.particleSystem) {

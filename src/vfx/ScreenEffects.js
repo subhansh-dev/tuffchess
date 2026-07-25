@@ -51,13 +51,13 @@ export class ScreenEffects {
         alpha: 0.9,
         decay: 0.02,
         growSpeed: 800 + Math.random() * 400,
-        color: ['#ffd700', '#ffffff', '#00ffff', '#ff4081'][Math.floor(Math.random() * 4)]
+        color: ['#B8960F', '#F5F0E8', '#D4A820', '#8B7355'][Math.floor(Math.random() * 4)]
       })
     }
   }
 
   // ── Energy Rings (expanding) ──────────────────────────────────
-  spawnEnergyRing(cx, cy, radius = 5, maxRadius = 150, color = '#ffd700', width = 2) {
+  spawnEnergyRing(cx, cy, radius = 5, maxRadius = 150, color = '#B8960F', width = 2) {
     this.energyRings.push({
       x: cx,
       y: cy,
@@ -72,9 +72,9 @@ export class ScreenEffects {
   }
 
   spawnTripleRing(cx, cy, intensity = 1) {
-    this.spawnEnergyRing(cx, cy, 5, 120 * intensity, '#ffd700', 3)
-    this.spawnEnergyRing(cx, cy, 5, 180 * intensity, '#00ffff', 2)
-    this.spawnEnergyRing(cx, cy, 5, 80 * intensity, '#ff4081', 2.5)
+    this.spawnEnergyRing(cx, cy, 5, 120 * intensity, '#B8960F', 3)
+    this.spawnEnergyRing(cx, cy, 5, 180 * intensity, '#D4A820', 2)
+    this.spawnEnergyRing(cx, cy, 5, 80 * intensity, '#8B7355', 2.5)
   }
 
   // ── Distortion Wave (heat haze) ──────────────────────────────

@@ -26,7 +26,7 @@ export class ChessClock {
     this.activeSide = side
     this.running = true
     this.lastTick = performance.now()
-    this.interval = setInterval(() => this.tick(), 100)
+    // No setInterval — clock updates via updateFromLoop only
   }
 
   stop() {
@@ -66,6 +66,30 @@ export class ChessClock {
     }
 
     if (this.onTick) this.onTick(this.getDisplay())
+  }
+
+  /**
+   * Update clock from game loop dt. Called every frame for continuous ticking.
+   * This ensures the clock updates smoothly even without the setInterval.
+   */
+  updateFromLoop(dt) {
+    if (!this.running || this.initialTime === 0 || this.activeSide === null) return
+
+    if (this.activeSide === 'white') {
+      this.whiteTime = Math.max(0, this.whiteTime - dt)
+      if (this.whiteTime <= 0) {
+        this.whiteTime = 0
+        this.running = false
+        if (this.onFlag) this.onFlag('white')
+      }
+    } else if (this.activeSide === 'black') {
+      this.blackTime = Math.max(0, this.blackTime - dt)
+      if (this.blackTime <= 0) {
+        this.blackTime = 0
+        this.running = false
+        if (this.onFlag) this.onFlag('black')
+      }
+    }
   }
 
   getTime(side) {
@@ -109,6 +133,7 @@ export class ChessClock {
   }
 
   hasFlagFallen() {
+    if (this.initialTime === 0) return false
     return this.whiteTime <= 0 || this.blackTime <= 0
   }
 

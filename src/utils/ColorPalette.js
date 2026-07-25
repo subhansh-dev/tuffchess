@@ -1,39 +1,39 @@
 export const Colors = {
-  background: '#0a0a0f',
+  background: '#4A3C2A',
   board: {
-    light: '#e8dcc8',
-    dark: '#7d6b5a',
-    lightHighlight: '#f5f0e1',
-    darkHighlight: '#5d4e3d'
+    light: '#E8D5B5',
+    dark: '#8B7355',
+    lightHighlight: '#F5EDE0',
+    darkHighlight: '#6B5344'
   },
   highlight: {
-    move: 'rgba(255, 215, 0, 0.35)',
-    capture: 'rgba(255, 60, 60, 0.45)',
-    check: 'rgba(255, 50, 50, 0.6)',
-    lastMove: 'rgba(255, 255, 100, 0.3)',
-    selected: 'rgba(100, 200, 255, 0.4)',
-    premove: 'rgba(100, 255, 100, 0.3)'
+    move: 'rgba(184, 150, 15, 0.35)',
+    capture: 'rgba(180, 60, 40, 0.45)',
+    check: 'rgba(184, 60, 40, 0.6)',
+    lastMove: 'rgba(184, 150, 15, 0.25)',
+    selected: 'rgba(139, 115, 85, 0.4)',
+    premove: 'rgba(120, 160, 40, 0.3)'
   },
   piece: {
-    whiteStroke: '#1a1a2e',
-    blackStroke: '#0a0a0f',
-    whiteGlow: 'rgba(255, 255, 255, 0.6)',
-    blackGlow: 'rgba(20, 20, 40, 0.8)'
+    whiteStroke: '#2C2C2C',
+    blackStroke: '#1a1a1a',
+    whiteGlow: 'rgba(255, 255, 255, 0.5)',
+    blackGlow: 'rgba(44, 36, 24, 0.8)'
   },
   ui: {
-    primary: '#ffd700',
-    secondary: '#00d4ff',
-    danger: '#ff3c3c',
-    success: '#4ade80',
-    text: '#f0eae0',
-    textDim: '#8b7d6b',
-    panel: 'rgba(15, 15, 25, 0.92)',
-    border: 'rgba(255, 215, 0, 0.2)'
+    primary: '#B8960F',
+    secondary: '#8B7355',
+    danger: '#B84030',
+    success: '#5A8A3C',
+    text: '#2C2C2C',
+    textDim: '#6B5344',
+    panel: 'rgba(240, 232, 216, 0.92)',
+    border: 'rgba(184, 150, 15, 0.3)'
   },
   effects: {
-    sparkle: ['#ffd700', '#fff8dc', '#ffec8b', '#ffffe0'],
-    capture: ['#ff3c3c', '#ff6b6b', '#ff9999', '#ffcccc'],
-    magic: ['#00d4ff', '#7c4dff', '#ff4081', '#ffd700']
+    sparkle: ['#B8960F', '#D4A820', '#F5F0E8', '#E8DCCA'],
+    capture: ['#B84030', '#D46040', '#E88070', '#F0A098'],
+    magic: ['#B8960F', '#8B7355', '#D4A820', '#6B5344']
   },
   square: (file, rank) => (file + rank) % 2 === 0 ? Colors.board.light : Colors.board.dark
 }
