@@ -73,16 +73,18 @@ export class GhostPiece {
 
   drawShadow(ctx) {
     const cx = this.x + this.size / 2
-    const shadowY = this.y + this.size + 4 - this.height * 22 * 5.5
-    const shadowScale = 0.45 + this.height * 0.18
-    const shadowW = this.size * shadowScale
-    const shadowH = this.size * 0.055 * (1 + this.height * 0.6)
+    const liftAmount = Math.max(0, this.height)
+    // Shadow moves DOWN when piece lifts UP; shrinks as piece lifts
+    const shadowY = this.y + this.size + 2 + liftAmount * 10
+    const shadowScale = 0.5 - liftAmount * 0.15
+    const shadowH = this.size * 0.06 * (1 - liftAmount * 0.3)
+    const shadowW = this.size * Math.max(0.2, shadowScale)
 
     ctx.save()
     ctx.globalAlpha = this.shadowAlpha * 0.5
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
     ctx.beginPath()
-    ctx.ellipse(cx, shadowY, shadowW, shadowH, 0, 0, Math.PI * 2)
+    ctx.ellipse(cx, shadowY, shadowW, Math.max(shadowH, 1), 0, 0, Math.PI * 2)
     ctx.fill()
     ctx.restore()
   }

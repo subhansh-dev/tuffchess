@@ -435,8 +435,11 @@ class Game {
         this.makeBotMove()
       }
     } else {
+      // Friend mode — both players local
       this.input.setBotMode(false)
       this.input.setInputEnabled(true)
+      this.ui.updatePlayerBar('top', 'Black', '', false)
+      this.ui.updatePlayerBar('bottom', 'White', '', true)
     }
   }
 
@@ -646,6 +649,13 @@ loop(time) {
     this.canvas.style.width = window.innerWidth + 'px'
     this.canvas.style.height = window.innerHeight + 'px'
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+    // Update HUD heights for board offset calculation
+    if (this.renderer?.canvasRenderer) {
+      this.renderer.canvasRenderer.hudTopHeight = 48
+      this.renderer.canvasRenderer.hudBottomHeight = 48
+    }
+
     this.renderer?.resize(window.innerWidth, window.innerHeight)
     if (this.animationManager) {
       this.animationManager.resize(window.innerWidth, window.innerHeight)

@@ -90,7 +90,14 @@ export class UIManager {
     const ratingEl = bar.querySelector('.player-rating')
     const avatarEl = bar.querySelector('.player-avatar')
     if (nameEl) nameEl.textContent = name
-    if (ratingEl) ratingEl.textContent = `ELO ${rating}`
+    if (ratingEl) {
+      if (rating) {
+        ratingEl.textContent = `ELO ${rating}`
+        ratingEl.style.display = ''
+      } else {
+        ratingEl.style.display = 'none'
+      }
+    }
     if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase()
     bar.classList.toggle('active', isActive)
   }

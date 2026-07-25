@@ -7,16 +7,20 @@ export class CanvasRenderer {
     this.boardOffsetX = 0
     this.boardOffsetY = 0
     this.orientation = 1
+    this.hudTopHeight = 48    // player bar at top
+    this.hudBottomHeight = 48 // player bar at bottom
     this.resize(width, height)
   }
 
   resize(width, height) {
     this.width = width
     this.height = height
-    const boardSize = Math.min(width, height) * 0.92
+    // Board fits between HUD bars
+    const availableHeight = height - this.hudTopHeight - this.hudBottomHeight
+    const boardSize = Math.min(width * 0.92, availableHeight * 0.92)
     this.squareSize = boardSize / 8
     this.boardOffsetX = (width - boardSize) / 2
-    this.boardOffsetY = (height - boardSize) / 2
+    this.boardOffsetY = this.hudTopHeight + (availableHeight - boardSize) / 2
   }
 
   clear() {

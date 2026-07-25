@@ -1,32 +1,55 @@
 <svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="wkBody" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#f0ebdf;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#e8e0d0;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#f5f0e8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ede5d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0d6c6;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="wkCross" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
+    <linearGradient id="wkGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A820;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8960F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wkHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
     </linearGradient>
     <filter id="wkShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#0a0a0f" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0a0a0f" flood-opacity="0.4"/>
     </filter>
-    <filter id="wkGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="wkGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#f5f0e8" flood-opacity="0.3" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
   <g filter="url(#wkShadow)">
-    <path d="M225 45 C225 45 260 85 255 140 L255 270 C255 330 195 330 195 270 L195 140 C190 85 225 45 225 45 Z" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="8" filter="url(#wkGlow)"/>
-    <path d="M210 100 C210 100 230 110 225 150 C220 110 210 100 210 100 Z" fill="#fff8dc" opacity="0.9"/>
-    <path d="M225 110 L225 190" stroke="url(#wkCross)" stroke-width="14" stroke-linecap="round"/>
-    <path d="M195 110 L195 190" stroke="url(#wkCross)" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
-    <path d="M255 110 L255 190" stroke="url(#wkCross)" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
-    <ellipse cx="225" cy="220" rx="58" ry="20" fill="url(#wkCross)" opacity="0.9"/>
-    <ellipse cx="225" cy="220" rx="45" ry="14" fill="#fff8dc" opacity="0.5"/>
-    <path d="M165 220 L175 320 L275 320 L285 220 Z" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="8"/>
-    <ellipse cx="225" cy="335" rx="85" ry="20" fill="url(#wkCross)" opacity="0.9"/>
-    <ellipse cx="225" cy="335" rx="70" ry="14" fill="#fff8dc" opacity="0.5"/>
+    <!-- Cross on top -->
+    <rect x="208" y="38" width="34" height="72" rx="4" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="5"/>
+    <rect x="178" y="58" width="94" height="28" rx="4" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Crown band -->
+    <ellipse cx="225" cy="118" rx="68" ry="16" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="4"/>
+    <!-- Crown body (decorative ring section) -->
+    <path d="M157,118 L157,132 Q157,140 165,144 L185,150 Q192,154 192,162 L192,168 L258,168 L258,162 Q258,154 265,150 L285,144 Q293,140 293,132 L293,118" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Crown decorative dots -->
+    <circle cx="175" cy="118" r="8" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="3"/>
+    <circle cx="225" cy="112" r="8" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="3"/>
+    <circle cx="275" cy="118" r="8" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="3"/>
+    <!-- Neck taper -->
+    <path d="M192,168 Q192,180 185,200 L178,218 Q173,228 178,240 L188,258 Q192,264 198,268 L252,268 Q258,264 262,258 L272,240 Q277,228 272,218 L265,200 Q258,180 258,168 Z" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Collar ring -->
+    <ellipse cx="225" cy="218" rx="55" ry="12" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="3"/>
+    <!-- Body -->
+    <path d="M198,268 Q175,285 158,310 Q140,340 130,365 Q120,390 135,408 L315,408 Q330,390 320,365 Q310,340 292,310 Q275,285 252,268 Z" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Inner highlight -->
+    <path d="M210,285 Q198,305 192,340 Q188,370 195,395 L230,395 Q225,370 230,340 Q235,305 240,285 Z" fill="url(#wkHighlight)" opacity="0.5"/>
+    <!-- Base ring -->
+    <ellipse cx="225" cy="408" rx="115" ry="20" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="4"/>
+    <!-- Base -->
+    <path d="M110,408 Q105,420 112,430 Q130,440 225,440 Q320,440 338,430 Q345,420 340,408" fill="url(#wkBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Base bottom -->
+    <ellipse cx="225" cy="440" rx="113" ry="16" fill="url(#wkGold)" stroke="#1a1a2e" stroke-width="4"/>
+    <!-- Inner glow overlay -->
+    <path d="M198,268 Q175,285 158,310 Q140,340 130,365 Q120,390 135,408 L315,408 Q330,390 320,365 Q310,340 292,310 Q275,285 252,268 Z" fill="none" stroke="#f5f0e8" stroke-width="2" opacity="0.4" filter="url(#wkGlow)"/>
   </g>
 </svg>

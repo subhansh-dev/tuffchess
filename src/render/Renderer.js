@@ -124,10 +124,16 @@ export class Renderer {
       pr.victimGhostPiece = null
     }
 
+    // Get the destination square that's being animated (ghost piece covers it)
+    const animatingToSquare = this.animationManager?._animatingToSquare ?? -1
+
     for (let sq = 0; sq < 64; sq++) {
       const piece = board[sq]
       const color = colors[sq]
       if (piece === 0) continue
+
+      // Skip destination square during animation — ghost piece handles it
+      if (sq === animatingToSquare && pr.ghostPiece && pr.ghostPiece.alpha > 0.01) continue
 
       const { file, rank } = this.canvasRenderer.squareToCoord(sq, this.boardRenderer.boardAppearance.orientation)
       const x = boardOffsetX + file * squareSize + offset

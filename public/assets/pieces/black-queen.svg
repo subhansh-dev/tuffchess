@@ -1,38 +1,57 @@
 <svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bqBody" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2a2a3e;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#141425;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="bqBase" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:0.9" />
-      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:0.9" />
+    <linearGradient id="bqGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A820;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8960F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bqHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a3a5e;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:0" />
     </linearGradient>
     <filter id="bqShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0a0a0f" flood-opacity="0.55"/>
     </filter>
-    <filter id="bqGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="bqGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#D4A820" flood-opacity="0.15" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
   <g filter="url(#bqShadow)">
-    <path d="M225 55 C225 55 255 90 252 130 L248 115 L225 95 L202 115 L198 130 C195 90 225 55 225 55 Z" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="8" filter="url(#bqGlow)"/>
-    <path d="M225 115 L225 200" stroke="url(#bqBase)" stroke-width="12" stroke-linecap="round"/>
-    <path d="M205 115 Q225 105 245 115" stroke="url(#bqBase)" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.8"/>
-    <path d="M205 125 Q225 115 245 125" stroke="url(#bqBase)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <g transform="translate(225, 200)">
-      <path d="M0 -120 L-10 -85 L10 -85 Z" fill="url(#bqBase)" stroke="#b8860b" stroke-width="3"/>
-      <path d="M-45 -105 L-38 -75 L-52 -75 Z" fill="url(#bqBase)" stroke="#b8860b" stroke-width="3"/>
-      <path d="M45 -105 L38 -75 L52 -75 Z" fill="url(#bqBase)" stroke="#b8860b" stroke-width="3"/>
-      <path d="M-75 -90 L-68 -65 L-82 -65 Z" fill="url(#bqBase)" stroke="#b8860b" stroke-width="3"/>
-      <path d="M75 -90 L68 -65 L82 -65 Z" fill="url(#bqBase)" stroke="#b8860b" stroke-width="3"/>
-    </g>
-    <ellipse cx="225" cy="220" rx="68" ry="22" fill="url(#bqBase)" opacity="0.8"/>
-    <ellipse cx="225" cy="220" rx="54" ry="16" fill="#3a3a4e" opacity="0.4"/>
-    <path d="M160 200 L168 285 L282 285 L290 200 Z" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="8"/>
-    <ellipse cx="225" cy="300" rx="92" ry="20" fill="url(#bqBase)" opacity="0.8"/>
-    <ellipse cx="225" cy="300" rx="78" ry="14" fill="#3a3a4e" opacity="0.4"/>
+    <!-- Top ball -->
+    <circle cx="225" cy="52" r="16" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Coronet points (5 points) -->
+    <path d="M148,135 L158,75 L178,105 L198,58 L218,92 L225,55 L232,92 L252,58 L272,105 L292,75 L302,135 Z" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Gold tips on points -->
+    <circle cx="158" cy="75" r="7" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <circle cx="198" cy="58" r="7" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <circle cx="252" cy="58" r="7" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <circle cx="292" cy="75" r="7" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <!-- Crown band -->
+    <ellipse cx="225" cy="135" rx="78" ry="16" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="4"/>
+    <!-- Crown body -->
+    <path d="M147,135 L147,150 Q147,158 155,162 L175,168 Q182,172 182,178 L182,185 L268,185 L268,178 Q268,172 275,168 L295,162 Q303,158 303,150 L303,135" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Neck taper -->
+    <path d="M182,185 Q182,198 175,212 L168,225 Q163,238 168,250 L180,268 Q185,274 192,278 L258,278 Q265,274 270,268 L282,250 Q287,238 282,225 L275,212 Q268,198 268,185 Z" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Collar ring -->
+    <ellipse cx="225" cy="225" rx="58" ry="12" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <!-- Body -->
+    <path d="M192,278 Q170,295 155,318 Q138,348 128,372 Q118,395 135,412 L315,412 Q332,395 322,372 Q312,348 295,318 Q280,295 258,278 Z" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Inner highlight -->
+    <path d="M215,295 Q205,315 200,348 Q195,378 205,400 L240,400 Q235,378 240,348 Q245,315 250,295 Z" fill="url(#bqHighlight)" opacity="0.5"/>
+    <!-- Base ring -->
+    <ellipse cx="225" cy="412" rx="120" ry="20" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="4"/>
+    <!-- Base -->
+    <path d="M105,412 Q100,425 108,432 Q128,440 225,440 Q322,440 342,432 Q350,425 345,412" fill="url(#bqBody)" stroke="#0a0a0f" stroke-width="5"/>
+    <!-- Base bottom -->
+    <ellipse cx="225" cy="440" rx="118" ry="14" fill="url(#bqGold)" stroke="#0a0a0f" stroke-width="4"/>
+    <!-- Outer glow overlay -->
+    <path d="M192,278 Q170,295 155,318 Q138,348 128,372 Q118,395 135,412 L315,412 Q332,395 322,372 Q312,348 295,318 Q280,295 258,278 Z" fill="none" stroke="#D4A820" stroke-width="1" opacity="0.2" filter="url(#bqGlow)"/>
   </g>
 </svg>

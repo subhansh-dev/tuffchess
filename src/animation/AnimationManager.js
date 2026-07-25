@@ -36,6 +36,7 @@ export class AnimationManager {
     this.captureTier = null
     this._speedLines = null
     this._activeAnimeCapture = false
+    this._animatingToSquare = -1  // destination square during animation, -1 when none
   }
 
   getCamera() { return this.camera }
@@ -80,6 +81,7 @@ export class AnimationManager {
       this.ghostPieces = []
       this.pieceRenderer.ghostPiece = null
       this.pieceRenderer.victimGhostPiece = null
+      this._animatingToSquare = to  // track destination square
 
       const gp = new GhostPiece(this.pieceRenderer, piece, color, fromP.x, fromP.y, fromP.size)
       gp.targetX = toP.x
@@ -165,6 +167,7 @@ export class AnimationManager {
               gp.alpha = 0; gp.isMoving = false
               this.ghostPieces = []
               this.pieceRenderer.ghostPiece = null
+              this._animatingToSquare = -1  // animation finished
               resolve()
             }
           }
@@ -189,6 +192,7 @@ export class AnimationManager {
       this.ghostPieces = []
       this.pieceRenderer.ghostPiece = null
       this.pieceRenderer.victimGhostPiece = null
+      this._animatingToSquare = to  // track destination square
 
       const gp = new GhostPiece(this.pieceRenderer, piece, color, fromP.x, fromP.y, fromP.size)
       gp.targetX = toP.x
@@ -371,6 +375,7 @@ export class AnimationManager {
           this._speedLines = null
           this._activeAnimeCapture = false
           this._forcePostProcessing = false
+          this._animatingToSquare = -1  // animation finished
           this.resetCameraView()
           resolve()
         }
