@@ -6,72 +6,90 @@
   <title>TuffChess</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Noto+Sans+JP:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/src/ui/styles.css">
 </head>
 <body>
   <div id="app">
     <canvas id="game-canvas"></canvas>
     <div id="capture-flash"></div>
+    <div id="screen-flash-overlay"></div>
   </div>
 
-  <!-- Loading Screen — like unrolling a weathered parchment -->
+  <!-- ========== LOADING SCREEN ========== -->
   <div id="loading-screen">
+    <div class="loading-leather-texture"></div>
     <div class="loading-crest">
-      <svg viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" class="loading-chesspiece">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="loading-crest-svg">
         <defs>
-          <linearGradient id="crestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#D4A820" />
-            <stop offset="100%" style="stop-color:#8B7355" />
+          <linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#E8C547" />
+            <stop offset="30%" style="stop-color:#D4A017" />
+            <stop offset="70%" style="stop-color:#B8860B" />
+            <stop offset="100%" style="stop-color:#8B6914" />
           </linearGradient>
+          <filter id="crestShadow">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.5"/>
+          </filter>
         </defs>
-        <path d="M32 6 C32 6 46 16 42 34 L38 58 C38 72 26 72 26 58 L22 34 C18 16 32 6 32 6 Z" fill="url(#crestGrad)" stroke="#2C2C2C" stroke-width="2.5"/>
-        <path d="M28 18 C28 18 34 22 30 36 C26 22 28 18 28 18 Z" fill="#F5F0E8" opacity="0.5"/>
-        <circle cx="32" cy="72" r="16" fill="url(#crestGrad)" opacity="0.6"/>
+        <!-- Crown / royal crest shape -->
+        <path d="M50 8 L60 25 L75 18 L70 38 L88 35 L78 55 L92 65 L75 72 L80 88 L50 82 L20 88 L25 72 L8 65 L22 55 L12 35 L30 38 L25 18 L40 25 Z" 
+              fill="url(#crestGold)" stroke="#5C3D1E" stroke-width="1.5" filter="url(#crestShadow)"/>
+        <circle cx="50" cy="52" r="10" fill="#2C1810" stroke="#B8860B" stroke-width="1.5"/>
+        <circle cx="50" cy="52" r="5" fill="#E8C547"/>
       </svg>
     </div>
     <div class="loading-title">TuffChess</div>
+    <div class="loading-jp">駒の戦い</div>
     <p class="loading-subtitle">where every capture is a duel</p>
     <div class="loading-bar-track">
+      <div class="loading-bar-track-inner"></div>
       <div class="loading-bar-fill"></div>
     </div>
-    <p class="loading-status">Preparing the board...</p>
+    <p class="loading-status">Preparing the arena...</p>
   </div>
 
-  <!-- Main Menu -->
+  <!-- ========== MAIN MENU ========== -->
   <div id="main-menu" class="screen">
-    <div class="menu-logo">
-      <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="loadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#B8960F" />
-            <stop offset="100%" style="stop-color:#8B7355" />
-          </linearGradient>
-        </defs>
-        <path d="M64 8 C64 8 80 20 76 40 L72 70 C72 90 56 90 56 70 L52 40 C48 20 64 8 64 8 Z" fill="url(#loadGrad)" stroke="#2C2C2C" stroke-width="3"/>
-        <path d="M60 25 C60 25 68 30 64 45 C60 30 60 25 60 25 Z" fill="#F5F0E8" opacity="0.6"/>
-        <circle cx="64" cy="100" r="28" fill="url(#loadGrad)" opacity="0.7"/>
-      </svg>
-    </div>
-    <h1 class="menu-title">TuffChess</h1>
-    <p class="menu-subtitle">where every capture is a duel</p>
+    <div class="menu-leather-bg"></div>
+    <div class="menu-wood-panel">
+      <div class="menu-crest">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="menuGold" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#E8C547" />
+              <stop offset="50%" style="stop-color:#D4A017" />
+              <stop offset="100%" style="stop-color:#B8860B" />
+            </linearGradient>
+          </defs>
+          <path d="M50 8 L60 25 L75 18 L70 38 L88 35 L78 55 L92 65 L75 72 L80 88 L50 82 L20 88 L25 72 L8 65 L22 55 L12 35 L30 38 L25 18 L40 25 Z" 
+                fill="url(#menuGold)" stroke="#5C3D1E" stroke-width="1.5"/>
+          <circle cx="50" cy="52" r="10" fill="#2C1810" stroke="#B8860B" stroke-width="1.5"/>
+          <circle cx="50" cy="52" r="5" fill="#E8C547"/>
+        </svg>
+      </div>
+      <h1 class="menu-title">TuffChess</h1>
+      <div class="menu-jp-title">タフチェス</div>
+      <p class="menu-subtitle">where every capture is a duel</p>
 
-    <div class="menu-buttons">
-      <button class="btn btn-primary" data-action="play">
-        <span>&#9823;</span> Play
-      </button>
-      <button class="btn btn-secondary" data-action="open-history">
-        <span>&#9776;</span> History
-      </button>
-    </div>
+      <div class="menu-buttons">
+        <button class="btn btn-primary" data-action="play">
+          <span class="btn-icon-inner">&#9876;</span> Play
+        </button>
+        <button class="btn btn-secondary" data-action="open-history">
+          <span class="btn-icon-inner">&#9776;</span> History
+        </button>
+      </div>
 
-    <div class="menu-rating">
-      <div class="menu-rating-label">Your Rating</div>
-      <div class="menu-rating-value" id="menu-elo">1500</div>
+      <div class="menu-rating-card">
+        <div class="menu-rating-label">Your Rating</div>
+        <div class="menu-rating-value" id="menu-elo">1500</div>
+        <div class="menu-rating-stars">&#9733; &#9733; &#9733; &#9734; &#9734;</div>
+      </div>
     </div>
   </div>
 
-  <!-- Match History -->
+  <!-- ========== MATCH HISTORY ========== -->
   <div id="match-history" class="screen">
     <div class="history-container">
       <div class="history-header">
@@ -96,86 +114,98 @@
     </div>
   </div>
 
-  <!-- Mode Select -->
+  <!-- ========== MODE SELECT ========== -->
   <div id="mode-select" class="screen">
-    <h2 class="section-title">Choose Mode</h2>
-    <div class="mode-cards">
-      <div class="mode-card" data-action="select-bot">
-        <div class="mode-icon">&#9823;</div>
-        <div class="mode-name">vs Bot</div>
-        <div class="mode-desc">Play against the computer with adjustable difficulty</div>
+    <div class="wood-panel-center">
+      <h2 class="section-title">Choose Mode</h2>
+      <div class="mode-cards">
+        <div class="mode-card" data-action="select-bot">
+          <div class="mode-icon">&#9823;</div>
+          <div class="mode-name">vs Bot</div>
+          <div class="mode-desc">Face the AI warrior with adjustable difficulty</div>
+        </div>
+        <div class="mode-card" data-action="select-friend">
+          <div class="mode-icon">&#9818;</div>
+          <div class="mode-name">vs Friend</div>
+          <div class="mode-desc">Duel a friend on the same battlefield</div>
+        </div>
       </div>
-      <div class="mode-card" data-action="select-friend">
-        <div class="mode-icon">&#9818;</div>
-        <div class="mode-name">vs Friend</div>
-        <div class="mode-desc">Play locally with a friend on the same device</div>
-      </div>
+      <button class="btn btn-secondary btn-small" data-action="back-to-menu">Back</button>
     </div>
-    <button class="btn btn-secondary btn-small" data-action="back-to-menu">Back</button>
   </div>
 
-  <!-- Time Control Select -->
+  <!-- ========== TIME CONTROL ========== -->
   <div id="time-control" class="screen">
-    <h2 class="section-title">Time Control</h2>
-    <div class="time-cards">
-      <div class="time-card" data-time="600" data-action="select-time">
-        <div class="time-value">10</div>
-        <div class="time-unit">min</div>
-        <div class="time-label">Rapid</div>
+    <div class="wood-panel-center">
+      <h2 class="section-title">Time Control</h2>
+      <div class="time-cards">
+        <div class="time-card" data-time="600" data-action="select-time">
+          <div class="time-value">10</div>
+          <div class="time-unit">min</div>
+          <div class="time-label">Rapid</div>
+        </div>
+        <div class="time-card" data-time="300" data-action="select-time">
+          <div class="time-value">5</div>
+          <div class="time-unit">min</div>
+          <div class="time-label">Blitz</div>
+        </div>
+        <div class="time-card" data-time="180" data-action="select-time">
+          <div class="time-value">3</div>
+          <div class="time-unit">min</div>
+          <div class="time-label">Blitz</div>
+        </div>
+        <div class="time-card" data-time="60" data-action="select-time">
+          <div class="time-value">1</div>
+          <div class="time-unit">min</div>
+          <div class="time-label">Bullet</div>
+        </div>
+        <div class="time-card" data-time="0" data-action="select-time">
+          <div class="time-value">&infin;</div>
+          <div class="time-unit"></div>
+          <div class="time-label">No Clock</div>
+        </div>
       </div>
-      <div class="time-card" data-time="300" data-action="select-time">
-        <div class="time-value">5</div>
-        <div class="time-unit">min</div>
-        <div class="time-label">Blitz</div>
-      </div>
-      <div class="time-card" data-time="180" data-action="select-time">
-        <div class="time-value">3</div>
-        <div class="time-unit">min</div>
-        <div class="time-label">Blitz</div>
-      </div>
-      <div class="time-card" data-time="60" data-action="select-time">
-        <div class="time-value">1</div>
-        <div class="time-unit">min</div>
-        <div class="time-label">Bullet</div>
-      </div>
-      <div class="time-card" data-time="0" data-action="select-time">
-        <div class="time-value">&infin;</div>
-        <div class="time-unit"></div>
-        <div class="time-label">No Clock</div>
-      </div>
+      <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
     </div>
-    <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
   </div>
 
-  <!-- Bot Difficulty -->
+  <!-- ========== BOT DIFFICULTY ========== -->
   <div id="bot-difficulty" class="screen">
-    <h2 class="section-title">Bot Difficulty</h2>
-    <div class="difficulty-cards">
-      <div class="diff-card" data-difficulty="beginner" data-action="select-difficulty">
-        <div class="diff-name">Beginner</div>
-        <div class="diff-elo">~800 ELO</div>
+    <div class="wood-panel-center">
+      <h2 class="section-title">Bot Difficulty</h2>
+      <div class="difficulty-cards">
+        <div class="diff-card" data-difficulty="beginner" data-action="select-difficulty">
+          <div class="diff-rank">D</div>
+          <div class="diff-name">Beginner</div>
+          <div class="diff-elo">~800 ELO</div>
+        </div>
+        <div class="diff-card" data-difficulty="intermediate" data-action="select-difficulty">
+          <div class="diff-rank">C</div>
+          <div class="diff-name">Intermediate</div>
+          <div class="diff-elo">~1200 ELO</div>
+        </div>
+        <div class="diff-card" data-difficulty="advanced" data-action="select-difficulty">
+          <div class="diff-rank">B</div>
+          <div class="diff-name">Advanced</div>
+          <div class="diff-elo">~1600 ELO</div>
+        </div>
+        <div class="diff-card" data-difficulty="expert" data-action="select-difficulty">
+          <div class="diff-rank">S</div>
+          <div class="diff-name">Expert</div>
+          <div class="diff-elo">~2000 ELO</div>
+        </div>
       </div>
-      <div class="diff-card" data-difficulty="intermediate" data-action="select-difficulty">
-        <div class="diff-name">Intermediate</div>
-        <div class="diff-elo">~1200 ELO</div>
-      </div>
-      <div class="diff-card" data-difficulty="advanced" data-action="select-difficulty">
-        <div class="diff-name">Advanced</div>
-        <div class="diff-elo">~1600 ELO</div>
-      </div>
-      <div class="diff-card" data-difficulty="expert" data-action="select-difficulty">
-        <div class="diff-name">Expert</div>
-        <div class="diff-elo">~2000 ELO</div>
-      </div>
+      <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
     </div>
-    <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
   </div>
 
-  <!-- Game HUD -->
+  <!-- ========== GAME HUD ========== -->
   <div id="game-hud" class="screen">
-    <!-- Top player (opponent) — brass-framed label -->
     <div class="player-bar top">
-      <div class="player-avatar">B</div>
+      <div class="player-avatar">
+        <div class="avatar-ring"></div>
+        <span>B</span>
+      </div>
       <div class="player-info">
         <div class="player-name">Bot</div>
         <div class="player-rating">ELO 1200</div>
@@ -188,9 +218,11 @@
       </div>
     </div>
 
-    <!-- Bottom player (human) — brass-framed label -->
     <div class="player-bar bottom active">
-      <div class="player-avatar">Y</div>
+      <div class="player-avatar">
+        <div class="avatar-ring"></div>
+        <span>Y</span>
+      </div>
       <div class="player-info">
         <div class="player-name">You</div>
         <div class="player-rating">ELO 1500</div>
@@ -198,7 +230,6 @@
       <div class="player-clock" id="clock-bottom">--:--</div>
     </div>
 
-    <!-- Tool buttons -->
     <div class="hud-tools">
       <button class="btn-icon" data-action="toggle-sound" title="Toggle Sound">&#9834;</button>
       <button class="btn-icon" data-action="flip-board" title="Flip Board">&#8645;</button>
@@ -209,7 +240,6 @@
       <button class="btn-icon" data-action="back-to-menu-game" title="Menu">&#8962;</button>
     </div>
 
-    <!-- Replay controls (hidden during live play) -->
     <div class="replay-controls" id="replay-controls">
       <button class="btn-icon replay-btn" data-action="replay-start" title="Start">&#9198;</button>
       <button class="btn-icon replay-btn" data-action="replay-back" title="Previous Move">&#9664;</button>
@@ -219,18 +249,19 @@
       <button class="btn-icon replay-btn" data-action="replay-exit" title="Exit Replay">&#10005;</button>
     </div>
 
-    <!-- Move list panel -->
     <div class="move-list-panel">
       <div class="move-list-header">Moves</div>
       <div class="move-list-body"></div>
     </div>
   </div>
 
-  <!-- Game Over Modal — like lifting a flap on an old leather-bound box -->
+  <!-- ========== GAME OVER MODAL ========== -->
   <div id="game-over-modal" class="screen">
     <div class="game-over-card">
+      <div class="game-over-glow"></div>
       <div class="game-over-result">Checkmate</div>
       <div class="game-over-detail">White wins!</div>
+      <div class="game-over-jp">勝利</div>
       <div class="rating-change positive">+15</div>
       <div class="rating-new">New Rating: 1515</div>
       <div class="game-over-buttons">
@@ -240,10 +271,12 @@
     </div>
   </div>
 
-  <!-- Promotion Modal — leather-bound box flap -->
+  <!-- ========== PROMOTION MODAL ========== -->
   <div id="promotion-modal" class="screen">
     <div class="promotion-card">
+      <div class="promotion-glow"></div>
       <div class="promotion-title">Promote Pawn</div>
+      <div class="promotion-jp">昇格</div>
       <div class="promotion-pieces">
         <div class="promotion-piece" data-piece="q"><img src="/assets/pieces/white-queen.svg" alt="Queen"></div>
         <div class="promotion-piece" data-piece="r"><img src="/assets/pieces/white-rook.svg" alt="Rook"></div>
@@ -253,7 +286,7 @@
     </div>
   </div>
 
-  <!-- Share Modal -->
+  <!-- ========== SHARE MODAL ========== -->
   <div id="share-modal" class="screen">
     <div class="share-card">
       <div class="share-title">Share Game</div>

@@ -2,12 +2,12 @@ import { Piece, Color } from '../core/ChessTypes.js'
 import { Easing } from './Easing.js'
 
 /**
- * CaptureAnimations — 2026 Chess Edit Style VFX System
- * Every capture is a viral TikTok chess edit moment:
- * - Slash lines with intense glow and spark particles
+ * CaptureAnimations — Arena Battle Chess VFX System
+ * Every capture is a cinematic event:
+ * - Slash lines with intense crimson/gold glow
  * - Impact frames and screen-level slash marks
- * - Victim shatter with diamond-shaped fragments
- * - Dramatic color grading (sepia for royal, darkness for knight)
+ * - Victim shatter with star-shaped fragments
+ * - Dramatic color grading (darkness for knight, gold for royal)
  */
 
 export const CaptureTier = {
@@ -34,7 +34,7 @@ export function resolveCaptureTier(attackerPiece, victimPiece, isCheckmate = fal
 }
 
 /* ================================================================
-   ANIME SLASH LINE — Core building block (2026 style, more glow)
+   ANIME SLASH LINE — Core building block
    ================================================================ */
 
 class SlashLine {
@@ -43,17 +43,16 @@ class SlashLine {
     this.length = length; this.width = width; this.delay = delay
     this.alpha = 0; this.started = false; this.elapsed = 0
     this.sparkParticles = []
-    // More sparks for 2026 style
-    const sparkCount = Math.floor(length / 6)
+    const sparkCount = Math.floor(length / 5)
     for (let i = 0; i < sparkCount; i++) {
       const t = (i + 0.5) / sparkCount
       const dist = t * length * 0.5
       this.sparkParticles.push({
         x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist,
-        vx: Math.cos(angle + Math.PI/2) * (30 + Math.random() * 60) + (Math.random()-0.5) * 40,
-        vy: Math.sin(angle + Math.PI/2) * (30 + Math.random() * 60) + (Math.random()-0.5) * 40,
-        size: 1.5 + Math.random() * 3, alpha: 1,
-        life: 0.12 + Math.random() * 0.18, maxLife: 0.12 + Math.random() * 0.18
+        vx: Math.cos(angle + Math.PI/2) * (40 + Math.random() * 80) + (Math.random()-0.5) * 50,
+        vy: Math.sin(angle + Math.PI/2) * (40 + Math.random() * 80) + (Math.random()-0.5) * 50,
+        size: 2 + Math.random() * 4, alpha: 1,
+        life: 0.15 + Math.random() * 0.2, maxLife: 0.15 + Math.random() * 0.2
       })
     }
   }
@@ -63,7 +62,6 @@ class SlashLine {
     if (this.elapsed < this.delay) return
     this.started = true
     const slashProgress = Math.max(0, this.elapsed - this.delay)
-    // 2026 style: slash appears instantly then fades
     if (slashProgress < 0.04) { this.alpha = 1 }
     else if (slashProgress < 0.25) { this.alpha = 1 - (slashProgress - 0.04) / 0.21 }
     else { this.alpha = 0 }
@@ -81,26 +79,26 @@ class SlashLine {
     const halfLen = this.length * 0.5
     ctx.save()
 
-    // Glow layer (wider, brighter for 2026 style)
-    ctx.globalAlpha = this.alpha * 0.5; ctx.strokeStyle = '#F5F0E8'
-    ctx.lineWidth = this.width + 12; ctx.lineCap = 'round'
-    ctx.shadowColor = '#F5F0E8'; ctx.shadowBlur = 25
+    // Outer glow (wide, dim)
+    ctx.globalAlpha = this.alpha * 0.5; ctx.strokeStyle = '#FF6B35'
+    ctx.lineWidth = this.width + 16; ctx.lineCap = 'round'
+    ctx.shadowColor = '#FF6B35'; ctx.shadowBlur = 35
     ctx.beginPath()
     ctx.moveTo(this.cx - cos * halfLen, this.cy - sin * halfLen)
     ctx.lineTo(this.cx + cos * halfLen, this.cy + sin * halfLen)
     ctx.stroke()
 
-    // Core line (warm gold, thick)
-    ctx.globalAlpha = this.alpha; ctx.strokeStyle = '#B8960F'
-    ctx.lineWidth = this.width; ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 15
+    // Core line (gold)
+    ctx.globalAlpha = this.alpha; ctx.strokeStyle = '#FFD700'
+    ctx.lineWidth = this.width; ctx.shadowColor = '#FFD700'; ctx.shadowBlur = 20
     ctx.beginPath()
     ctx.moveTo(this.cx - cos * halfLen, this.cy - sin * halfLen)
     ctx.lineTo(this.cx + cos * halfLen, this.cy + sin * halfLen)
     ctx.stroke()
 
-    // White-hot center (thin, piercing)
-    ctx.globalAlpha = this.alpha * 0.85; ctx.strokeStyle = '#F5F0E8'
-    ctx.lineWidth = this.width * 0.35; ctx.shadowBlur = 8
+    // White-hot center
+    ctx.globalAlpha = this.alpha * 0.9; ctx.strokeStyle = '#FFFFFF'
+    ctx.lineWidth = this.width * 0.3; ctx.shadowBlur = 10
     ctx.beginPath()
     ctx.moveTo(this.cx - cos * halfLen * 0.6, this.cy - sin * halfLen * 0.6)
     ctx.lineTo(this.cx + cos * halfLen * 0.6, this.cy + sin * halfLen * 0.6)
@@ -108,19 +106,18 @@ class SlashLine {
 
     ctx.restore()
 
-    // Spark particles (gold sparks flying off the slash)
+    // Spark particles
     ctx.save()
     for (const p of this.sparkParticles) {
       if (p.alpha <= 0.01) continue
       ctx.globalAlpha = p.alpha
-      ctx.fillStyle = '#D4A820'
-      ctx.shadowColor = '#D4A820'; ctx.shadowBlur = 5
-      // Diamond-shaped sparks (2026 chess edit style)
+      ctx.fillStyle = '#FFD700'
+      ctx.shadowColor = '#FFD700'; ctx.shadowBlur = 6
       ctx.beginPath()
       ctx.moveTo(p.x, p.y - p.size)
-      ctx.lineTo(p.x + p.size * 0.4, p.y)
-      ctx.lineTo(p.x, p.y + p.size * 0.3)
-      ctx.lineTo(p.x - p.size * 0.4, p.y)
+      ctx.lineTo(p.x + p.size * 0.5, p.y)
+      ctx.lineTo(p.x, p.y + p.size * 0.4)
+      ctx.lineTo(p.x - p.size * 0.5, p.y)
       ctx.closePath()
       ctx.fill()
     }
@@ -129,7 +126,7 @@ class SlashLine {
 }
 
 /* ================================================================
-   ANIME SLASH EFFECT (Default — 2026 style single dramatic slash)
+   ANIME SLASH EFFECT (Default)
    ================================================================ */
 
 export class AnimeSlashEffect {
@@ -137,22 +134,18 @@ export class AnimeSlashEffect {
     this.canvasRenderer = canvasRenderer; this.cx = cx; this.cy = cy
     this.pieceSize = pieceSize; this.victimColor = victimColor; this.intensity = intensity
     this.duration = 0.5 + intensity * 0.1; this.finished = false
-    // Slash angle: diagonal with slight randomness
     const slashAngle = Math.PI * 0.25 + Math.random() * 0.3
-    // 2026 style: longer slash lines (2x piece size), wider
-    this.slashLines = [new SlashLine(cx, cy, slashAngle, pieceSize * 2.2, 4 + intensity * 2)]
+    this.slashLines = [new SlashLine(cx, cy, slashAngle, pieceSize * 2.4, 4 + intensity * 2)]
     if (intensity > 1) {
-      this.slashLines.push(new SlashLine(cx, cy, slashAngle + 0.5, pieceSize * 1.6, 2 + intensity, 0.04))
+      this.slashLines.push(new SlashLine(cx, cy, slashAngle + 0.5, pieceSize * 1.8, 2 + intensity, 0.04))
     }
     this.victimAlpha = 1; this.victimScale = 1; this.dissolveProgress = 0
-    // Fragment particles for victim destruction
     this.fragments = []
     this.fragmentsSpawned = false
   }
   start() {}
   update(progress) {
     for (const s of this.slashLines) s.update(progress)
-    // Victim lifecycle: visible → inflate → shatter → fragments
     if (progress < 0.18) { this.victimAlpha = 1; this.victimScale = 1 }
     else if (progress < 0.28) {
       const h = (progress-0.18)/0.10
@@ -167,12 +160,10 @@ export class AnimeSlashEffect {
     }
     else { this.victimAlpha = 0; this.dissolveProgress = 1 }
 
-    // Spawn fragments at shatter point
     if (progress > 0.30 && !this.fragmentsSpawned) {
       this.fragmentsSpawned = true
-      this._spawnFragments(this.intensity * 8)
+      this._spawnFragments(this.intensity * 10)
     }
-    // Update fragments
     for (let i = this.fragments.length - 1; i >= 0; i--) {
       const f = this.fragments[i]
       f.x += f.vx * 1/60; f.y += f.vy * 1/60; f.vy += 200 * 1/60
@@ -186,31 +177,37 @@ export class AnimeSlashEffect {
   _spawnFragments(count) {
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random()-0.5) * 0.5
-      const speed = 120 + Math.random() * 180
-      const colors = ['#B8960F', '#D4A820', '#F5F0E8', '#E8DCCA']
+      const speed = 150 + Math.random() * 200
+      const colors = ['#FFD700', '#FF6B35', '#C41E3A', '#FFFFFF', '#A090C0']
       this.fragments.push({
         x: this.cx, y: this.cy,
         vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 60,
         size: this.pieceSize * (0.08 + Math.random() * 0.12),
         rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random()-0.5) * 12,
+        rotSpeed: (Math.random()-0.5) * 14,
         alpha: 1, color: colors[Math.floor(Math.random() * colors.length)]
       })
     }
   }
   render(ctx) {
     for (const s of this.slashLines) s.render(ctx)
-    // Render fragments
     ctx.save()
     for (const f of this.fragments) {
       if (f.alpha <= 0.01) continue
       ctx.globalAlpha = f.alpha
       ctx.translate(f.x, f.y); ctx.rotate(f.rotation)
-      ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 4
-      // Diamond-shaped fragment (2026 chess edit)
+      ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 6
+      // Star fragment
+      const s = f.size
       ctx.beginPath()
-      ctx.moveTo(0, -f.size); ctx.lineTo(f.size*0.5, 0)
-      ctx.lineTo(0, f.size*0.4); ctx.lineTo(-f.size*0.5, 0)
+      ctx.moveTo(0, -s)
+      ctx.lineTo(s*0.3, -s*0.3)
+      ctx.lineTo(s, 0)
+      ctx.lineTo(s*0.3, s*0.3)
+      ctx.lineTo(0, s*0.6)
+      ctx.lineTo(-s*0.3, s*0.3)
+      ctx.lineTo(-s, 0)
+      ctx.lineTo(-s*0.3, -s*0.3)
       ctx.closePath(); ctx.fill()
       ctx.setTransform(1, 0, 0, 1, 0, 0)
     }
@@ -219,7 +216,7 @@ export class AnimeSlashEffect {
 }
 
 /* ================================================================
-   ANIME PAWN SLASH — Quick diagonal slash, victim splits in two
+   ANIME PAWN SLASH
    ================================================================ */
 
 export class AnimePawnSlashEffect {
@@ -254,7 +251,7 @@ export class AnimePawnSlashEffect {
 }
 
 /* ================================================================
-   ANIME KNIGHT STRIKE — Dark aura, teleport, dramatic slash
+   ANIME KNIGHT STRIKE
    ================================================================ */
 
 export class AnimeKnightStrikeEffect {
@@ -264,18 +261,16 @@ export class AnimeKnightStrikeEffect {
     this.pieceSize = pieceSize; this.attackerColor = attackerColor; this.victimColor = victimColor
     this.duration = 0.8; this.finished = false
     const slashAngle = Math.atan2(toY-fromY, toX-fromX) + Math.PI*0.3
-    // Knight gets 2 dramatic slash lines
     this.slashLines = [
-      new SlashLine(cx, cy, slashAngle, pieceSize*2.8, 5),
-      new SlashLine(cx, cy, slashAngle+0.5, pieceSize*2.2, 4, 0.06)
+      new SlashLine(cx, cy, slashAngle, pieceSize*2.6, 5),
+      new SlashLine(cx, cy, slashAngle+0.5, pieceSize*2.0, 4, 0.06)
     ]
     this.darkAuraAlpha = 0; this.victimAlpha = 1
   }
   start() {}
   update(progress) {
-    // Dark aura: rises then falls
-    if (progress < 0.25) this.darkAuraAlpha = Easing.easeOutCubic(progress/0.25)*0.6
-    else if (progress < 0.55) this.darkAuraAlpha = 0.6*(1-(progress-0.25)/0.30)
+    if (progress < 0.25) this.darkAuraAlpha = Easing.easeOutCubic(progress/0.25)*0.5
+    else if (progress < 0.55) this.darkAuraAlpha = 0.5*(1-(progress-0.25)/0.30)
     else this.darkAuraAlpha = 0
     for (const s of this.slashLines) s.update(progress)
     if (progress < 0.35) this.victimAlpha = 1
@@ -284,10 +279,9 @@ export class AnimeKnightStrikeEffect {
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
-    // Dark aura overlay — the "darkness" effect
     if (this.darkAuraAlpha > 0.01) {
       ctx.save(); ctx.globalAlpha = this.darkAuraAlpha
-      ctx.fillStyle = '#1a1410'
+      ctx.fillStyle = '#0a0812'
       ctx.fillRect(0, 0, this.canvasRenderer.width, this.canvasRenderer.height)
       ctx.restore()
     }
@@ -296,7 +290,7 @@ export class AnimeKnightStrikeEffect {
 }
 
 /* ================================================================
-   ANIME QUEEN MULTI-SLASH — 3 rapid slashes, massive impact
+   ANIME QUEEN MULTI-SLASH
    ================================================================ */
 
 export class AnimeQueenMultiSlashEffect {
@@ -304,11 +298,10 @@ export class AnimeQueenMultiSlashEffect {
     this.canvasRenderer = canvasRenderer; this.cx = cx; this.cy = cy
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 0.7; this.finished = false
-    // Queen gets 3 slashes at different angles — rapid fire
     this.slashLines = [
-      new SlashLine(cx, cy, Math.PI*0.2, pieceSize*2.5, 5),
-      new SlashLine(cx, cy, Math.PI*0.5, pieceSize*2.2, 4, 0.06),
-      new SlashLine(cx, cy, Math.PI*0.8, pieceSize*2.0, 3, 0.12)
+      new SlashLine(cx, cy, Math.PI*0.2, pieceSize*2.4, 5),
+      new SlashLine(cx, cy, Math.PI*0.5, pieceSize*2.0, 4, 0.06),
+      new SlashLine(cx, cy, Math.PI*0.8, pieceSize*1.8, 3, 0.12)
     ]
     this.victimAlpha = 1
   }
@@ -324,7 +317,7 @@ export class AnimeQueenMultiSlashEffect {
 }
 
 /* ================================================================
-   ANIME ROOK CHARGE — Charging slide trail + impact slash
+   ANIME ROOK CHARGE
    ================================================================ */
 
 export class AnimeRookChargeEffect {
@@ -334,7 +327,7 @@ export class AnimeRookChargeEffect {
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 0.6; this.finished = false
     const moveAngle = Math.atan2(toY-fromY, toX-fromX)
-    this.slashLines = [new SlashLine(cx, cy, moveAngle+Math.PI/4, pieceSize*2.2, 4)]
+    this.slashLines = [new SlashLine(cx, cy, moveAngle+Math.PI/4, pieceSize*2.0, 4)]
     this.victimAlpha = 1; this.trailAlpha = 0
   }
   start() {}
@@ -348,11 +341,10 @@ export class AnimeRookChargeEffect {
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
-    // Charge trail: thick golden line from start to end
     if (this.trailAlpha > 0.01) {
       ctx.save(); ctx.globalAlpha = this.trailAlpha
-      ctx.strokeStyle = '#B8960F'; ctx.lineWidth = this.pieceSize*0.18
-      ctx.lineCap = 'round'; ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 18
+      ctx.strokeStyle = '#FFD700'; ctx.lineWidth = this.pieceSize*0.18
+      ctx.lineCap = 'round'; ctx.shadowColor = '#FFD700'; ctx.shadowBlur = 22
       ctx.beginPath()
       ctx.moveTo(this.fromX+this.pieceSize/2, this.fromY+this.pieceSize/2)
       ctx.lineTo(this.toX+this.pieceSize/2, this.toY+this.pieceSize/2)
@@ -363,7 +355,7 @@ export class AnimeRookChargeEffect {
 }
 
 /* ================================================================
-   ANIME CLASH EFFECT — Both pieces clash, dramatic multi-slash
+   ANIME CLASH EFFECT
    ================================================================ */
 
 export class AnimeClashEffect {
@@ -371,21 +363,18 @@ export class AnimeClashEffect {
     this.canvasRenderer = canvasRenderer; this.cx = cx; this.cy = cy
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 0.8; this.finished = false
-    // Epic clash: 3 slash lines at different angles
     this.slashLines = [
-      new SlashLine(cx, cy, Math.PI*0.1, pieceSize*2.8, 6),
-      new SlashLine(cx, cy, Math.PI*0.6, pieceSize*2.5, 5, 0.05),
-      new SlashLine(cx, cy, Math.PI*1.1, pieceSize*2.2, 4, 0.10)
+      new SlashLine(cx, cy, Math.PI*0.1, pieceSize*2.6, 6),
+      new SlashLine(cx, cy, Math.PI*0.6, pieceSize*2.2, 5, 0.05),
+      new SlashLine(cx, cy, Math.PI*1.1, pieceSize*1.8, 4, 0.10)
     ]
     this.victimAlpha = 1; this.flashAlpha = 0; this.boardDarken = 0
   }
   start() {}
   update(progress) {
     for (const s of this.slashLines) s.update(progress)
-    // Flash at impact point
     if (progress > 0.12 && progress < 0.18) this.flashAlpha = 0.4*(1-(progress-0.12)/0.06)
     else this.flashAlpha = 0
-    // Board darkening for drama
     if (progress < 0.15) this.boardDarken = Easing.easeOutCubic(progress/0.15)*0.25
     else if (progress < 0.45) this.boardDarken = 0.25
     else this.boardDarken = 0.25*(1-(progress-0.45)/0.35)
@@ -395,17 +384,15 @@ export class AnimeClashEffect {
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
-    // Board darken overlay
     if (this.boardDarken > 0.01) {
       ctx.save(); ctx.globalAlpha = this.boardDarken
-      ctx.fillStyle = '#1a1410'
+      ctx.fillStyle = '#0a0812'
       ctx.fillRect(0, 0, this.canvasRenderer.width, this.canvasRenderer.height)
       ctx.restore()
     }
-    // Impact flash overlay
     if (this.flashAlpha > 0.01) {
       ctx.save(); ctx.globalAlpha = this.flashAlpha
-      ctx.fillStyle = '#F5F0E8'
+      ctx.fillStyle = '#FFFFFF'
       ctx.fillRect(0, 0, this.canvasRenderer.width, this.canvasRenderer.height)
       ctx.restore()
     }
@@ -414,7 +401,7 @@ export class AnimeClashEffect {
 }
 
 /* ================================================================
-   ANIME ROYAL DECAP — Crown shatter, sepia, extreme slow-mo
+   ANIME ROYAL DECAP
    ================================================================ */
 
 export class AnimeRoyalDecapEffect {
@@ -422,66 +409,57 @@ export class AnimeRoyalDecapEffect {
     this.canvasRenderer = canvasRenderer; this.cx = cx; this.cy = cy
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 1.5; this.finished = false
-    // Royal decap: 4 dramatic slash lines
     this.slashLines = [
-      new SlashLine(cx, cy, Math.PI*0.15, pieceSize*3.2, 7),
-      new SlashLine(cx, cy, Math.PI*0.45, pieceSize*2.8, 6, 0.08),
-      new SlashLine(cx, cy, Math.PI*0.75, pieceSize*2.5, 5, 0.16),
-      new SlashLine(cx, cy, Math.PI*1.05, pieceSize*2.2, 4, 0.24)
+      new SlashLine(cx, cy, Math.PI*0.15, pieceSize*3.0, 7),
+      new SlashLine(cx, cy, Math.PI*0.45, pieceSize*2.6, 6, 0.08),
+      new SlashLine(cx, cy, Math.PI*0.75, pieceSize*2.2, 5, 0.16),
+      new SlashLine(cx, cy, Math.PI*1.05, pieceSize*1.8, 4, 0.24)
     ]
     this.victimAlpha = 1; this.sepiaAmount = 0; this.boardDarken = 0
     this.crownShatterAlpha = 0
     this.crownParticles = []
   }
   start() {
-    // Crown shatter particles — golden fragments flying outward
-    for (let i = 0; i < 25; i++) {
-      const angle = Math.random() * Math.PI * 2, speed = 100 + Math.random() * 250
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2, speed = 120 + Math.random() * 280
       this.crownParticles.push({
         x: this.cx, y: this.cy - this.pieceSize*0.2,
-        vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed-120,
-        size: 2.5+Math.random()*5, alpha: 1,
-        life: 0.9+Math.random()*0.6, maxLife: 0.9+Math.random()*0.6,
-        rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*12,
-        color: '#B8960F'
+        vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed-140,
+        size: 3+Math.random()*6, alpha: 1,
+        life: 1.0+Math.random()*0.6, maxLife: 1.0+Math.random()*0.6,
+        rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*14,
+        color: '#FFD700'
       })
     }
   }
   update(progress) {
     for (const s of this.slashLines) s.update(progress)
-    // Sepia color grading rises then falls
     if (progress < 0.15) this.sepiaAmount = Easing.easeOutCubic(progress/0.15)*0.7
     else if (progress < 0.60) this.sepiaAmount = 0.7
     else this.sepiaAmount = 0.7*(1-(progress-0.60)/0.40)
-    // Board darkening for dramatic atmosphere
     if (progress < 0.25) this.boardDarken = Easing.easeOutCubic(progress/0.25)*0.45
     else if (progress < 0.60) this.boardDarken = 0.45
     else this.boardDarken = 0.45*(1-(progress-0.60)/0.40)
-    // Crown shatter visibility
     if (progress > 0.15 && progress < 0.75) this.crownShatterAlpha = 1
     else if (progress >= 0.75) this.crownShatterAlpha = Math.max(0, 1-(progress-0.75)/0.25)
-    // Update crown particles
     for (let i = this.crownParticles.length - 1; i >= 0; i--) {
       const p = this.crownParticles[i]
       p.life -= 1/60; p.alpha = Math.max(0, p.life/p.maxLife)
       p.x += p.vx*1/60; p.y += p.vy*1/60; p.vy += 220*1/60; p.rotation += p.rotSpeed*1/60
       if (p.life <= 0) this.crownParticles.splice(i, 1)
     }
-    // Victim destruction lifecycle
     if (progress < 0.25) this.victimAlpha = 1
     else if (progress < 0.50) this.victimAlpha = 1 - Easing.easeInQuint((progress-0.25)/0.25)
     else this.victimAlpha = 0
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
-    // Board darken — heavy atmosphere
     if (this.boardDarken > 0.01) {
       ctx.save(); ctx.globalAlpha = this.boardDarken
-      ctx.fillStyle = '#0a0805'
+      ctx.fillStyle = '#050308'
       ctx.fillRect(0, 0, this.canvasRenderer.width, this.canvasRenderer.height)
       ctx.restore()
     }
-    // Sepia color grading overlay
     if (this.sepiaAmount > 0.01) {
       ctx.save(); ctx.globalCompositeOperation = 'multiply'
       ctx.globalAlpha = this.sepiaAmount*0.45; ctx.fillStyle = '#8B7355'
@@ -489,18 +467,20 @@ export class AnimeRoyalDecapEffect {
       ctx.restore()
     }
     for (const s of this.slashLines) s.render(ctx)
-    // Crown shatter particles — golden diamond fragments
     if (this.crownShatterAlpha > 0.01) {
       ctx.save()
       for (const p of this.crownParticles) {
         if (p.alpha <= 0.01) continue
         ctx.globalAlpha = p.alpha * this.crownShatterAlpha
         ctx.translate(p.x, p.y); ctx.rotate(p.rotation)
-        ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 8
-        // Crown-shaped fragment (diamond with cross)
+        ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 10
+        // Star fragment
+        const s = p.size
         ctx.beginPath()
-        ctx.moveTo(0, -p.size); ctx.lineTo(p.size*0.6, 0)
-        ctx.lineTo(0, p.size*0.5); ctx.lineTo(-p.size*0.6, 0)
+        ctx.moveTo(0, -s); ctx.lineTo(s*0.3, -s*0.3)
+        ctx.lineTo(s, 0); ctx.lineTo(s*0.3, s*0.3)
+        ctx.lineTo(0, s); ctx.lineTo(-s*0.3, s*0.3)
+        ctx.lineTo(-s, 0); ctx.lineTo(-s*0.3, -s*0.3)
         ctx.closePath(); ctx.fill()
         ctx.setTransform(1, 0, 0, 1, 0, 0)
       }

@@ -2,16 +2,9 @@ import { ParticleSystem, ParticlePalettes } from '../animation/ParticleSystem.js
 import { CaptureTier } from '../animation/CaptureAnimations.js'
 
 /**
- * Renderer — 2026 Chess Edit Style
+ * Renderer — Arena Battle Style
  * Renders board + pieces inside camera transform (board space),
  * then renders all VFX overlays in screen space AFTER camera restore.
- *
- * Screen-space effects order (bottom to top):
- *   1. Capture effect (slash lines, darkening, flashes)
- *   2. Screen-level slash (diagonal across entire viewport)
- *   3. Speed lines (manga radial burst)
- *   4. Impact frame (brief white/black overlay)
- *   5. Particle system
  */
 export class Renderer {
   constructor(canvasRenderer, pieceRenderer, boardRenderer) {
@@ -25,6 +18,7 @@ export class Renderer {
 
     this.particleSystem = new ParticleSystem()
     this.animationManager = null
+    this._renderTime = 0
   }
 
   setAnimationManager(am) { this.animationManager = am }
@@ -37,6 +31,7 @@ export class Renderer {
 
   render(engine, camera, ghostPieces = [], trails = [], captureEffects = null) {
     const { ctx, width, height } = this
+    this._renderTime += 16.67
 
     this.clear()
 
@@ -46,7 +41,7 @@ export class Renderer {
     }
 
     this.renderBackground(ctx, width, height)
-    this.boardRenderer.render(ctx)
+    this.boardRenderer.render(ctx, this._renderTime)
 
     if (engine) {
       this.renderStaticPieces(engine, captureEffects)
@@ -68,27 +63,27 @@ export class Renderer {
 
     // === SCREEN SPACE: all overlay effects WITHOUT camera transform ===
 
-    // 1. Capture effects (slash lines, darkening, vignette — in screen space)
+    // 1. Capture effects (slash lines, darkening, vignette)
     if (captureEffects) {
       this.renderCaptureEffects(ctx, captureEffects)
     }
 
-    // 2. Screen-level slash (diagonal slash across entire viewport — 2026 style)
+    // 2. Screen-level slash
     if (this.animationManager && this.animationManager.renderScreenSlash) {
       this.animationManager.renderScreenSlash(ctx)
     }
 
-    // 3. Speed lines (manga radial burst in screen space)
+    // 3. Speed lines (manga radial burst)
     if (this.animationManager && this.animationManager.renderSpeedLines) {
       this.animationManager.renderSpeedLines(ctx)
     }
 
-    // 4. Impact frame (brief full-screen white/black flash)
+    // 4. Impact frame
     if (this.animationManager && this.animationManager.renderImpactFrame) {
       this.animationManager.renderImpactFrame(ctx)
     }
 
-    // 5. Particle system in screen space
+    // 5. Particle system
     if (this.particleSystem) {
       this.particleSystem.render(ctx)
     }
@@ -102,33 +97,36 @@ export class Renderer {
   }
 
   renderBackground(ctx, width, height) {
-    // Warm aged wood background
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#4A3C2A')
-    gradient.addColorStop(0.3, '#3D3020')
-    gradient.addColorStop(0.7, '#352A1C')
-    gradient.addColorStop(1, '#2E2418')
+    // Deep arena floor
+    const gradient = ctx.createRadialGradient(
+      width / 2, height / 2, 0,
+      width / 2, height / 2, Math.max(width, height) * 0.8
+    )
+    gradient.addColorStop(0, '#0d0b14')
+    gradient.addColorStop(0.4, '#0a0812')
+    gradient.addColorStop(0.8, '#050408')
+    gradient.addColorStop(1, '#020103')
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Subtle warm light spots
-    ctx.globalAlpha = 0.06
-    const lightGradient1 = ctx.createRadialGradient(
-      width * 0.3, height * 0.3, 0,
-      width * 0.3, height * 0.3, width * 0.5
+    // Arena spotlight effect
+    ctx.globalAlpha = 0.04
+    const spot1 = ctx.createRadialGradient(
+      width * 0.3, height * 0.4, 0,
+      width * 0.3, height * 0.4, width * 0.6
     )
-    lightGradient1.addColorStop(0, '#8B7355')
-    lightGradient1.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = lightGradient1
+    spot1.addColorStop(0, '#FFD700')
+    spot1.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = spot1
     ctx.fillRect(0, 0, width, height)
 
-    const lightGradient2 = ctx.createRadialGradient(
+    const spot2 = ctx.createRadialGradient(
       width * 0.7, height * 0.6, 0,
-      width * 0.7, height * 0.6, width * 0.4
+      width * 0.7, height * 0.6, width * 0.5
     )
-    lightGradient2.addColorStop(0, '#A89070')
-    lightGradient2.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = lightGradient2
+    spot2.addColorStop(0, '#C41E3A')
+    spot2.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = spot2
     ctx.fillRect(0, 0, width, height)
     ctx.globalAlpha = 1
   }
@@ -142,7 +140,6 @@ export class Renderer {
 
     const pr = this.pieceRenderer
 
-    // Clear stale ghost pieces
     if (pr.ghostPiece && pr.ghostPiece.alpha <= 0.01) {
       pr.ghostPiece = null
       pr.victimGhostPiece = null
@@ -155,7 +152,6 @@ export class Renderer {
       const color = colors[sq]
       if (piece === 0) continue
 
-      // Skip destination square during animation
       if (sq === animatingToSquare && pr.ghostPiece && pr.ghostPiece.alpha > 0.01) continue
 
       const { file, rank } = this.canvasRenderer.squareToCoord(sq, this.boardRenderer.boardAppearance.orientation)
@@ -183,7 +179,7 @@ export class Renderer {
       attackerGhost.draw(ctx)
     }
 
-    // Victim ghost — special handling for PawnSplit
+    // Victim ghost
     const victimGhost = this.pieceRenderer.victimGhostPiece
     if (victimGhost && victimGhost.alpha > 0.01) {
       if (captureEffects?.tier === CaptureTier.PAWN_SPLIT && captureEffects?.effect) {
@@ -210,7 +206,6 @@ export class Renderer {
     const cy = effect.cy
     const pieceSize = effect.pieceSize
 
-    // Left half
     ctx.save()
     ctx.globalAlpha = effect.dissolveAlpha
     const leftOffsetX = effect.leftHalfOffset * Math.cos(splitAngle)
@@ -222,7 +217,6 @@ export class Renderer {
     victimGhost.draw(ctx)
     ctx.restore()
 
-    // Right half
     ctx.save()
     ctx.globalAlpha = effect.dissolveAlpha
     const rightOffsetX = effect.rightHalfOffset * Math.cos(splitAngle)
@@ -243,12 +237,14 @@ export class Renderer {
       const t = i / trail.length
       const prev = trail[i - 1]
       const curr = trail[i]
-      const alpha = t * 0.12
+      const alpha = t * 0.18
 
       ctx.globalAlpha = alpha
-      ctx.strokeStyle = '#B8960F'
+      ctx.strokeStyle = '#FFD700'
       ctx.lineWidth = 4 * t
       ctx.lineCap = 'round'
+      ctx.shadowColor = '#FFD700'
+      ctx.shadowBlur = 8
       ctx.beginPath()
       ctx.moveTo(prev.x, prev.y)
       ctx.lineTo(curr.x, curr.y)
@@ -260,13 +256,11 @@ export class Renderer {
   renderCaptureEffects(ctx, effects) {
     if (!effects) return
 
-    // Delegate to the effect object's render method
     if (effects.effect && typeof effects.effect.render === 'function') {
       effects.effect.render(ctx)
       return
     }
 
-    // Legacy fallback
     const pieceSize = effects.pieceSize || 64
     const cx = effects.centerX || 0
     const cy = effects.centerY || 0
@@ -274,7 +268,7 @@ export class Renderer {
     if (effects.flashAlpha > 0.01) {
       ctx.save()
       ctx.globalAlpha = effects.flashAlpha * 0.15
-      ctx.fillStyle = '#F5F0E8'
+      ctx.fillStyle = '#FFD700'
       ctx.fillRect(0, 0, this.width, this.height)
       ctx.restore()
     }
@@ -284,9 +278,10 @@ export class Renderer {
       const ringWidth = pieceSize * 0.12 * (1 - effects.ringProgress)
       ctx.save()
       ctx.globalAlpha = (1 - effects.ringProgress) * 0.8
-      ctx.strokeStyle = '#B8960F'
+      ctx.strokeStyle = '#FFD700'
       ctx.lineWidth = ringWidth
-      ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 12
+      ctx.shadowColor = '#FFD700'
+      ctx.shadowBlur = 16
       ctx.beginPath()
       ctx.arc(cx, cy, ringR, 0, Math.PI * 2)
       ctx.stroke()
@@ -298,21 +293,28 @@ export class Renderer {
         if (f.alpha <= 0) continue
         ctx.save()
         ctx.globalAlpha = f.alpha
-        ctx.translate(f.x, f.y); ctx.rotate(f.rotation)
-        ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 6
+        ctx.translate(f.x, f.y)
+        ctx.rotate(f.rotation)
+        ctx.fillStyle = f.color
+        ctx.shadowColor = f.color
+        ctx.shadowBlur = 8
         if (f.shape === 'square') {
           ctx.fillRect(-f.size / 2, -f.size / 2, f.size, f.size)
         } else if (f.shape === 'diamond') {
           ctx.beginPath()
-          ctx.moveTo(0, -f.size); ctx.lineTo(f.size, 0)
-          ctx.lineTo(0, f.size); ctx.lineTo(-f.size, 0)
-          ctx.closePath(); ctx.fill()
+          ctx.moveTo(0, -f.size)
+          ctx.lineTo(f.size, 0)
+          ctx.lineTo(0, f.size)
+          ctx.lineTo(-f.size, 0)
+          ctx.closePath()
+          ctx.fill()
         } else if (f.shape === 'triangle') {
           ctx.beginPath()
           ctx.moveTo(0, -f.size)
           ctx.lineTo(f.size * 0.866, f.size * 0.5)
           ctx.lineTo(-f.size * 0.866, f.size * 0.5)
-          ctx.closePath(); ctx.fill()
+          ctx.closePath()
+          ctx.fill()
         }
         ctx.restore()
       }
@@ -338,7 +340,7 @@ export class Renderer {
         this.width / 2, this.height / 2, Math.max(this.width, this.height)
       )
       gradient.addColorStop(0, 'rgba(0,0,0,0)')
-      gradient.addColorStop(1, `rgba(30,20,10,${effects.vignette * 0.5})`)
+      gradient.addColorStop(1, `rgba(10,5,20,${effects.vignette * 0.6})`)
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, this.width, this.height)
       ctx.restore()
@@ -350,7 +352,7 @@ export class Renderer {
 
     ctx.save()
     ctx.font = '12px monospace'
-    ctx.fillStyle = '#B8960F'
+    ctx.fillStyle = '#FFD700'
     ctx.fillText(`Ghost pieces: ${ghostPieces.filter(g => g?.visible).length}`, 10, 20)
     ctx.fillText(`Trails: ${trails.length}`, 10, 35)
     ctx.restore()
