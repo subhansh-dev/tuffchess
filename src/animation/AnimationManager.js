@@ -263,8 +263,7 @@ export class AnimationManager {
         this.captureEffect.start()
       }
 
-      // === ANIME CAMERA WORK: Zoom-in on capture square ===
-      this.camera.panTo(cx, cy, animeCameraConfig.zoomInDuration)
+      // === ANIME CAMERA WORK: Zoom-from-center (keeps board in frame) ===
       this.camera.zoomTo(animeCameraConfig.zoomLevel, animeCameraConfig.zoomInDuration)
       this.camera.vignette = 0.3
 
@@ -306,7 +305,7 @@ export class AnimationManager {
           }
           if (camInstr.shake && !this._impactTriggered) {
             this._impactTriggered = true
-            this.camera.shake(camInstr.shakeIntensity, camInstr.shakeDuration, camInstr.shakeAngle || 0)
+            this.camera.shake(Math.min(camInstr.shakeIntensity, 6), camInstr.shakeDuration, camInstr.shakeAngle || 0)
             this.spawnImpactParticles(cx, cy, fromP.size)
           }
           if (camInstr.screenFlash) {
@@ -324,9 +323,7 @@ export class AnimationManager {
           if (camInstr.zoom) {
             this.camera.zoomTo(camInstr.zoom, camInstr.zoomDuration || 0.15)
           }
-          if (camInstr.pan) {
-            this.camera.panTo(camInstr.pan.x, camInstr.pan.y, camInstr.pan.duration || 0.15)
-          }
+          // NO PANNING — pan instructions ignored to keep board centered
           // Force post-processing to render every frame during animation
           this._forcePostProcessing = true
         }
@@ -334,11 +331,6 @@ export class AnimationManager {
         // === ZOOM OUT after impact phase ===
         if (rawProgress > animeCameraConfig.zoomOutStart && !this._zoomOutTriggered) {
           this._zoomOutTriggered = true
-          this.camera.panTo(
-            this.camera.boardCenterX,
-            this.camera.boardCenterY,
-            animeCameraConfig.zoomOutDuration
-          )
           this.camera.zoomTo(1, animeCameraConfig.zoomOutDuration)
         }
 
@@ -346,8 +338,8 @@ export class AnimationManager {
         if (!this._impactTriggered && rawProgress >= 0.15) {
           this._impactTriggered = true
           this.spawnImpactParticles(cx, cy, fromP.size)
-          // Camera shake at impact (anime style)
-          this.camera.shake(animeCameraConfig.shakeIntensity, animeCameraConfig.shakeDuration)
+          // Camera shake at impact — bounded to 6px max
+          this.camera.shake(Math.min(animeCameraConfig.shakeIntensity, 6), animeCameraConfig.shakeDuration)
         }
 
         if (this.captureEffect && this.captureEffect.update) {
@@ -376,7 +368,12 @@ export class AnimationManager {
           this._activeAnimeCapture = false
           this._forcePostProcessing = false
           this._animatingToSquare = -1  // animation finished
-          this.resetCameraView()
+          // Force camera back to neutral — guaranteed reset
+          this.camera.zoomTo(1, 0.25)
+          this.camera.vignette = 0
+          this.camera.chromaticAberration = 0
+          this.camera.screenFlash = { color: [255,255,255], alpha: 0 }
+          this.camera.colorGrade = { contrast: 0, saturation: 0, brightness: 0 }
           resolve()
         }
       }
@@ -384,43 +381,44 @@ export class AnimationManager {
     })
   }
 
-  /** Get anime-style camera configuration per capture tier */
+  /** Get anime-style camera configuration per capture tier — bounded zoom/shake */
   _getAnimeCameraConfig(tier) {
+    // Zoom capped at 1.3 max (keeps board visible), shake bounded to 6px
     const configs = {
       [CaptureTier.EDIT_DISSOLVE]: {
-        zoomLevel: 1.15, zoomInDuration: 0.2,
+        zoomLevel: 1.12, zoomInDuration: 0.2,
         zoomOutStart: 0.4, zoomOutDuration: 0.25,
         shakeIntensity: 4, shakeDuration: 0.15
       },
       [CaptureTier.PAWN_SPLIT]: {
-        zoomLevel: 1.2, zoomInDuration: 0.15,
+        zoomLevel: 1.15, zoomInDuration: 0.15,
         zoomOutStart: 0.35, zoomOutDuration: 0.2,
-        shakeIntensity: 6, shakeDuration: 0.12
+        shakeIntensity: 5, shakeDuration: 0.12
       },
       [CaptureTier.KNIGHT_DARKNESS]: {
-        zoomLevel: 1.25, zoomInDuration: 0.15,
+        zoomLevel: 1.2, zoomInDuration: 0.15,
         zoomOutStart: 0.5, zoomOutDuration: 0.25,
-        shakeIntensity: 8, shakeDuration: 0.18
+        shakeIntensity: 6, shakeDuration: 0.18
       },
       [CaptureTier.QUEEN_SLASH]: {
-        zoomLevel: 1.3, zoomInDuration: 0.12,
+        zoomLevel: 1.25, zoomInDuration: 0.12,
         zoomOutStart: 0.55, zoomOutDuration: 0.3,
-        shakeIntensity: 12, shakeDuration: 0.2
+        shakeIntensity: 6, shakeDuration: 0.2
       },
       [CaptureTier.ROOK_PATH]: {
-        zoomLevel: 1.2, zoomInDuration: 0.2,
+        zoomLevel: 1.18, zoomInDuration: 0.2,
         zoomOutStart: 0.45, zoomOutDuration: 0.25,
-        shakeIntensity: 10, shakeDuration: 0.18
+        shakeIntensity: 6, shakeDuration: 0.18
       },
       [CaptureTier.EPIC_CLASH]: {
-        zoomLevel: 1.35, zoomInDuration: 0.12,
+        zoomLevel: 1.28, zoomInDuration: 0.12,
         zoomOutStart: 0.5, zoomOutDuration: 0.3,
-        shakeIntensity: 14, shakeDuration: 0.22
+        shakeIntensity: 6, shakeDuration: 0.22
       },
       [CaptureTier.ROYAL_DECAP]: {
-        zoomLevel: 1.5, zoomInDuration: 0.1,
+        zoomLevel: 1.3, zoomInDuration: 0.1,
         zoomOutStart: 0.6, zoomOutDuration: 0.35,
-        shakeIntensity: 18, shakeDuration: 0.25
+        shakeIntensity: 6, shakeDuration: 0.25
       }
     }
     return configs[tier] || configs[CaptureTier.EDIT_DISSOLVE]
@@ -428,19 +426,16 @@ export class AnimationManager {
 
   // === UPGRADE 3: CHECK / CHECKMATE DRAMA ===
   zoomToKing(kingSquare, orientation, intensity = 1) {
-    const p = this.squareToPixel(kingSquare, orientation || 1)
-    const cx = this.canvasRenderer.boardOffsetX + this.canvasRenderer.squareSize * (orientation === 1 ? kingSquare % 8 : 7 - kingSquare % 8) + this.canvasRenderer.squareSize / 2
-    const cy = this.canvasRenderer.boardOffsetY + this.canvasRenderer.squareSize * (orientation === 1 ? 7 - Math.floor(kingSquare / 8) : Math.floor(kingSquare / 8)) + this.canvasRenderer.squareSize / 2
-    this.camera.panTo(cx, cy, 0.45)
-    this.camera.zoomTo(1.2 * intensity, 0.4)
+    // Zoom-from-center only — no panning
+    this.camera.zoomTo(Math.min(1.2 * intensity, 1.3), 0.4)
     this.camera.vignette = 0.4 * intensity
     this.camera.screenFlash = { color: [220, 30, 30], alpha: 0.4 * intensity }
     this.camera.chromaticAberration = 0.3 * intensity
-    this.camera.shake(5 * intensity, 0.2)
+    this.camera.shake(Math.min(5 * intensity, 6), 0.2)
   }
 
   resetCameraView() {
-    this.camera.panTo(this.camera.boardCenterX, this.camera.boardCenterY, 0.35)
+    // No panning needed — just zoom back to 1 and clear effects
     this.camera.zoomTo(1, 0.3)
     this.camera.vignette = 0
     this.camera.chromaticAberration = 0

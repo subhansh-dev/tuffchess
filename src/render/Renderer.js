@@ -28,12 +28,12 @@ export class Renderer {
 
     this.clear()
 
+    // === BOARD SPACE: everything inside camera transform ===
     if (camera && camera.isActive) {
       camera.applyTransform(ctx)
     }
 
     this.renderBackground(ctx, width, height)
-
     this.boardRenderer.render(ctx)
 
     if (engine) {
@@ -50,21 +50,22 @@ export class Renderer {
       }
     }
 
-    // Render capture effects (overlays, particles, flashes, etc.)
-    if (captureEffects) {
-      this.renderCaptureEffects(ctx, captureEffects)
-    }
-
-    // ANIME: Render manga-style speed lines from animation manager
-    if (this.animationManager && this.animationManager.renderSpeedLines) {
-      this.animationManager.renderSpeedLines(ctx)
-    }
-
     if (camera && camera.isActive) {
       camera.restoreTransform(ctx)
     }
 
-    // Post-processing: particles rendered in screen space
+    // === SCREEN SPACE: all overlay effects rendered WITHOUT camera transform ===
+    // Capture effects (slash lines, flashes, darkening, vignette — all in screen space)
+    if (captureEffects) {
+      this.renderCaptureEffects(ctx, captureEffects)
+    }
+
+    // ANIME: Speed lines in SCREEN SPACE (so they don't zoom/move with board)
+    if (this.animationManager && this.animationManager.renderSpeedLines) {
+      this.animationManager.renderSpeedLines(ctx)
+    }
+
+    // Particle system in screen space
     if (this.particleSystem) {
       this.particleSystem.render(ctx)
     }
@@ -242,15 +243,9 @@ export class Renderer {
     if (!effects) return
 
     // NEW: If we have a tiered capture effect object, delegate to its render method
+    // Effects render in screen space — no shake translation needed (Camera handles shake)
     if (effects.effect && typeof effects.effect.render === 'function') {
-      const shake = effects.effect.render(ctx)
-      // Apply shake offset if returned
-      if (shake && (shake.shakeX || shake.shakeY)) {
-        ctx.save()
-        ctx.translate(shake.shakeX || 0, shake.shakeY || 0)
-        // Note: the shake is already applied inside the effect render
-        ctx.restore()
-      }
+      effects.effect.render(ctx)
       return
     }
 

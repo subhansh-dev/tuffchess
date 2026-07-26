@@ -130,7 +130,6 @@ export class AnimeSlashEffect {
     this.slashLines = [new SlashLine(cx, cy, slashAngle, pieceSize * 1.8, 3 + intensity * 2)]
     if (intensity > 1) this.slashLines.push(new SlashLine(cx, cy, slashAngle + 0.4, pieceSize * 1.4, 2 + intensity, 0.05))
     this.victimAlpha = 1; this.victimScale = 1; this.dissolveProgress = 0
-    this.shakeX = 0; this.shakeY = 0
   }
   start() {}
   update(progress) {
@@ -139,11 +138,10 @@ export class AnimeSlashEffect {
     else if (progress < 0.3) { const h = (progress-0.15)/0.15; this.victimScale = 1 + h*0.15*this.intensity; this.victimAlpha = 1 }
     else if (progress < 0.5) { const d = (progress-0.3)/0.2; this.victimAlpha = 1 - Easing.easeInCubic(d); this.victimScale = 1+0.15*this.intensity-d*0.3; this.dissolveProgress = d }
     else { this.victimAlpha = 0; this.victimScale = 0.5; this.dissolveProgress = 1 }
-    if (progress > 0.14 && progress < 0.25) { const s = (progress-0.14)/0.11; const i = 4*this.intensity*(1-s); this.shakeX = Math.cos(performance.now()*0.05)*i; this.shakeY = Math.sin(performance.now()*0.07)*i*0.5 }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake is handled by Camera system — no per-effect shake needed
     if (progress >= 1) this.finished = true
   }
-  render(ctx) { for (const s of this.slashLines) s.render(ctx); return { shakeX: this.shakeX, shakeY: this.shakeY } }
+  render(ctx) { for (const s of this.slashLines) s.render(ctx) }
 }
 
 /* ================================================================
@@ -159,7 +157,6 @@ export class AnimePawnSlashEffect {
     this.slashLines = [new SlashLine(cx, cy, slashAngle, pieceSize * 1.5, 2)]
     this.travelAngle = slashAngle
     this.dissolveAlpha = 1; this.leftHalfOffset = 0; this.rightHalfOffset = 0; this.splitProgress = 0
-    this.shakeX = 0; this.shakeY = 0
   }
   start() {}
   update(progress) {
@@ -167,11 +164,10 @@ export class AnimePawnSlashEffect {
     if (progress < 0.15) { this.dissolveAlpha = 1; this.leftHalfOffset = 0; this.rightHalfOffset = 0 }
     else if (progress < 0.4) { const sp = (progress-0.15)/0.25; this.splitProgress = sp; this.dissolveAlpha = 1 - sp*0.3; this.leftHalfOffset = sp*this.pieceSize*0.6; this.rightHalfOffset = sp*this.pieceSize*0.6 }
     else { const fp = (progress-0.4)/0.1; this.dissolveAlpha = Math.max(0, 0.7 - fp*0.7); this.leftHalfOffset = this.pieceSize*0.6 + fp*this.pieceSize*0.3; this.rightHalfOffset = this.pieceSize*0.6 + fp*this.pieceSize*0.3 }
-    if (progress > 0.14 && progress < 0.22) { const s = (progress-0.14)/0.08; this.shakeX = Math.cos(performance.now()*0.05)*3*(1-s); this.shakeY = Math.sin(performance.now()*0.07)*2*(1-s) }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
-  render(ctx) { for (const s of this.slashLines) s.render(ctx); return { shakeX: this.shakeX, shakeY: this.shakeY } }
+  render(ctx) { for (const s of this.slashLines) s.render(ctx) }
 }
 
 /* ================================================================
@@ -186,7 +182,7 @@ export class AnimeKnightStrikeEffect {
     this.duration = 1.2; this.finished = false
     const slashAngle = Math.atan2(toY-fromY, toX-fromX) + Math.PI*0.3
     this.slashLines = [new SlashLine(cx, cy, slashAngle, pieceSize*2.5, 4), new SlashLine(cx, cy, slashAngle+0.5, pieceSize*2, 3, 0.08)]
-    this.darkAuraAlpha = 0; this.victimAlpha = 1; this.shakeX = 0; this.shakeY = 0
+    this.darkAuraAlpha = 0; this.victimAlpha = 1
   }
   start() {}
   update(progress) {
@@ -197,14 +193,12 @@ export class AnimeKnightStrikeEffect {
     if (progress < 0.4) this.victimAlpha = 1
     else if (progress < 0.6) this.victimAlpha = 1-(progress-0.4)/0.2
     else this.victimAlpha = 0
-    if (progress > 0.38 && progress < 0.5) { const s = (progress-0.38)/0.12; this.shakeX = Math.cos(performance.now()*0.04)*10*(1-s); this.shakeY = Math.sin(performance.now()*0.06)*6*(1-s) }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
     if (this.darkAuraAlpha > 0.01) { ctx.save(); ctx.globalAlpha = this.darkAuraAlpha; ctx.fillStyle = '#1a1410'; ctx.fillRect(0,0,this.canvasRenderer.width,this.canvasRenderer.height); ctx.restore() }
     for (const s of this.slashLines) s.render(ctx)
-    return { shakeX: this.shakeX, shakeY: this.shakeY }
   }
 }
 
@@ -218,7 +212,7 @@ export class AnimeQueenMultiSlashEffect {
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 0.9; this.finished = false
     this.slashLines = [new SlashLine(cx, cy, Math.PI*0.2, pieceSize*2.2, 4), new SlashLine(cx, cy, Math.PI*0.5, pieceSize*2, 3, 0.08), new SlashLine(cx, cy, Math.PI*0.8, pieceSize*1.8, 3, 0.16)]
-    this.victimAlpha = 1; this.shakeX = 0; this.shakeY = 0
+    this.victimAlpha = 1
   }
   start() {}
   update(progress) {
@@ -226,13 +220,10 @@ export class AnimeQueenMultiSlashEffect {
     if (progress < 0.35) this.victimAlpha = 1
     else if (progress < 0.6) this.victimAlpha = 1 - Easing.easeInCubic((progress-0.35)/0.25)
     else this.victimAlpha = 0
-    if (progress > 0.06 && progress < 0.12) { this.shakeX = Math.cos(performance.now()*0.05)*8; this.shakeY = Math.sin(performance.now()*0.07)*5 }
-    else if (progress > 0.14 && progress < 0.2) { this.shakeX = Math.cos(performance.now()*0.06)*10; this.shakeY = Math.sin(performance.now()*0.08)*6 }
-    else if (progress > 0.22 && progress < 0.3) { this.shakeX = Math.cos(performance.now()*0.04)*12; this.shakeY = Math.sin(performance.now()*0.06)*8 }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
-  render(ctx) { for (const s of this.slashLines) s.render(ctx); return { shakeX: this.shakeX, shakeY: this.shakeY } }
+  render(ctx) { for (const s of this.slashLines) s.render(ctx) }
 }
 
 /* ================================================================
@@ -247,7 +238,7 @@ export class AnimeRookChargeEffect {
     this.duration = 0.7; this.finished = false
     const moveAngle = Math.atan2(toY-fromY, toX-fromX)
     this.slashLines = [new SlashLine(cx, cy, moveAngle+Math.PI/4, pieceSize*2, 4)]
-    this.victimAlpha = 1; this.trailAlpha = 0; this.shakeX = 0; this.shakeY = 0
+    this.victimAlpha = 1; this.trailAlpha = 0
   }
   start() {}
   update(progress) {
@@ -257,14 +248,12 @@ export class AnimeRookChargeEffect {
     if (progress < 0.3) this.victimAlpha = 1
     else if (progress < 0.5) this.victimAlpha = 1-(progress-0.3)/0.2
     else this.victimAlpha = 0
-    if (progress > 0.25 && progress < 0.4) { const s = (progress-0.25)/0.15; this.shakeX = Math.cos(performance.now()*0.03)*10*(1-s); this.shakeY = Math.sin(performance.now()*0.05)*6*(1-s) }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
     if (this.trailAlpha > 0.01) { ctx.save(); ctx.globalAlpha = this.trailAlpha; ctx.strokeStyle = '#B8960F'; ctx.lineWidth = this.pieceSize*0.15; ctx.lineCap = 'round'; ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 15; ctx.beginPath(); ctx.moveTo(this.fromX+this.pieceSize/2, this.fromY+this.pieceSize/2); ctx.lineTo(this.toX+this.pieceSize/2, this.toY+this.pieceSize/2); ctx.stroke(); ctx.restore() }
     for (const s of this.slashLines) s.render(ctx)
-    return { shakeX: this.shakeX, shakeY: this.shakeY }
   }
 }
 
@@ -278,7 +267,7 @@ export class AnimeClashEffect {
     this.pieceSize = pieceSize; this.victimColor = victimColor
     this.duration = 1.0; this.finished = false
     this.slashLines = [new SlashLine(cx, cy, Math.PI*0.1, pieceSize*2.5, 5), new SlashLine(cx, cy, Math.PI*0.6, pieceSize*2.3, 4, 0.06), new SlashLine(cx, cy, Math.PI*1.1, pieceSize*2, 3, 0.12)]
-    this.victimAlpha = 1; this.flashAlpha = 0; this.boardDarken = 0; this.shakeX = 0; this.shakeY = 0
+    this.victimAlpha = 1; this.flashAlpha = 0; this.boardDarken = 0
   }
   start() {}
   update(progress) {
@@ -291,15 +280,13 @@ export class AnimeClashEffect {
     if (progress < 0.3) this.victimAlpha = 1
     else if (progress < 0.5) this.victimAlpha = 1 - Easing.easeInCubic((progress-0.3)/0.2)
     else this.victimAlpha = 0
-    if (progress > 0.1 && progress < 0.3) { const s = (progress-0.1)/0.2; this.shakeX = Math.cos(performance.now()*0.03)*14*(1-s); this.shakeY = Math.sin(performance.now()*0.05)*8*(1-s) }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
     if (this.boardDarken > 0.01) { ctx.save(); ctx.globalAlpha = this.boardDarken; ctx.fillStyle = '#1a1410'; ctx.fillRect(0,0,this.canvasRenderer.width,this.canvasRenderer.height); ctx.restore() }
     if (this.flashAlpha > 0.01) { ctx.save(); ctx.globalAlpha = this.flashAlpha; ctx.fillStyle = '#F5F0E8'; ctx.fillRect(0,0,this.canvasRenderer.width,this.canvasRenderer.height); ctx.restore() }
     for (const s of this.slashLines) s.render(ctx)
-    return { shakeX: this.shakeX, shakeY: this.shakeY }
   }
 }
 
@@ -314,7 +301,7 @@ export class AnimeRoyalDecapEffect {
     this.duration = 2.0; this.finished = false
     this.slashLines = [new SlashLine(cx, cy, Math.PI*0.15, pieceSize*3, 6), new SlashLine(cx, cy, Math.PI*0.45, pieceSize*2.8, 5, 0.1), new SlashLine(cx, cy, Math.PI*0.75, pieceSize*2.5, 4, 0.2), new SlashLine(cx, cy, Math.PI*1.05, pieceSize*2.2, 3, 0.3)]
     this.victimAlpha = 1; this.sepiaAmount = 0; this.boardDarken = 0; this.crownShatterAlpha = 0
-    this.crownParticles = []; this.shakeX = 0; this.shakeY = 0
+    this.crownParticles = []
   }
   start() {
     for (let i = 0; i < 20; i++) {
@@ -341,9 +328,7 @@ export class AnimeRoyalDecapEffect {
     if (progress < 0.3) this.victimAlpha = 1
     else if (progress < 0.6) this.victimAlpha = 1 - Easing.easeInQuint((progress-0.3)/0.3)
     else this.victimAlpha = 0
-    if (progress > 0.15 && progress < 0.25) { const s = (progress-0.15)/0.1; this.shakeX = Math.cos(performance.now()*0.02)*16*(1-s); this.shakeY = Math.sin(performance.now()*0.04)*10*(1-s) }
-    else if (progress > 0.3 && progress < 0.4) { const s = (progress-0.3)/0.1; this.shakeX = Math.cos(performance.now()*0.03)*12*(1-s); this.shakeY = Math.sin(performance.now()*0.05)*8*(1-s) }
-    else { this.shakeX = 0; this.shakeY = 0 }
+    // Shake handled by Camera system
     if (progress >= 1) this.finished = true
   }
   render(ctx) {
@@ -362,6 +347,5 @@ export class AnimeRoyalDecapEffect {
       }
       ctx.restore()
     }
-    return { shakeX: this.shakeX, shakeY: this.shakeY }
   }
 }
