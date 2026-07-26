@@ -1,0 +1,101 @@
+<svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bkniBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#141425;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bkniGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A820;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8960F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bkniHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a3a5e;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:0" />
+    </linearGradient>
+    <filter id="bkniShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0a0a0f" flood-opacity="0.55"/>
+    </filter>
+    <filter id="bkniGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#D4A820" flood-opacity="0.15" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#bkniShadow)">
+    <!-- Horse head silhouette (facing left) -->
+    <path d="
+      M295,240
+      C290,225 285,210 278,195
+      C270,180 262,165 255,152
+      C248,140 240,128 232,118
+      C224,108 215,100 205,95
+      C195,92 185,92 175,96
+      C165,100 155,110 148,122
+      C140,135 125,150 118,165
+      C112,178 108,190 108,200
+      C108,212 112,222 122,230
+      C135,240 150,248 168,255
+      C185,260 195,265 198,270
+      L295,270
+      Z
+    " fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="5"/>
+    
+    <!-- Mane bumps -->
+    <path d="M295,240 C305,232 315,222 318,210 C320,200 315,192 308,186 C300,182 295,180 288,184 C282,188 280,196 283,204 C288,212 292,220 295,228" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <path d="M308,186 C318,172 325,158 322,148 C320,142 312,138 306,142 C300,148 298,158 300,168 C305,178 308,182 308,186" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <path d="M306,142 C318,128 325,115 320,105 C315,100 308,98 300,102 C295,108 292,118 296,128 C300,135 306,138 306,142" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <!-- Left ear -->
+    <path d="M205,95 C203,65 195,45 188,35 C182,28 178,30 178,38 C180,50 188,60 195,72 C200,82 203,88 205,95" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="5"/>
+    
+    <!-- Right ear -->
+    <path d="M232,118 C238,82 240,55 236,42 C232,35 226,32 220,38 C216,46 218,58 222,72 C228,88 232,102 232,112" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="5"/>
+    
+    <!-- Gold ear tips -->
+    <circle cx="188" cy="35" r="6" fill="url(#bkniGold)" stroke="#0a0a0f" stroke-width="3"/>
+    <circle cx="236" cy="42" r="6" fill="url(#bkniGold)" stroke="#0a0a0f" stroke-width="3"/>
+    
+    <!-- Eye -->
+    <ellipse cx="155" cy="122" rx="20" ry="15" fill="#0a0a0f" stroke="#3a3a5e" stroke-width="2"/>
+    <ellipse cx="150" cy="118" rx="7" ry="5" fill="#3a3a5e" opacity="0.5"/>
+    
+    <!-- Nostril -->
+    <ellipse cx="108" cy="200" rx="12" ry="7" fill="#141425" stroke="#3a3a5e" stroke-width="2"/>
+    
+    <!-- Mouth line -->
+    <path d="M108,205 C118,215 135,225 155,232" fill="none" stroke="#3a3a5e" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Highlight on face -->
+    <path d="M175,96 C165,100 155,110 148,122 C140,135 138,150 138,168 C138,180 142,192 150,200 C160,210 170,218 180,222" fill="url(#bkniHighlight)" opacity="0.4"/>
+    
+    <!-- Mane gold accents -->
+    <path d="M318,210 C315,204 310,200 308,198" fill="none" stroke="#D4A820" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <path d="M322,148 C318,142 312,138 310,136" fill="none" stroke="#D4A820" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <path d="M320,105 C315,100 308,98 306,96" fill="none" stroke="#D4A820" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    
+    <!-- Body (below horse head) -->
+    <path d="M198,270 Q175,288 158,312 Q140,342 130,368 Q120,392 135,412 L315,412 Q330,392 320,368 Q310,342 292,312 Q275,288 252,270 Z" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="5"/>
+    
+    <!-- Body highlight -->
+    <path d="M220,285 Q210,310 205,350 Q200,385 210,405 L245,405 Q240,385 245,350 Q250,310 255,285 Z" fill="url(#bkniHighlight)" opacity="0.4"/>
+    
+    <!-- Collar ring -->
+    <ellipse cx="225" cy="270" rx="65" ry="12" fill="url(#bkniGold)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <!-- Base ring -->
+    <ellipse cx="225" cy="412" rx="115" ry="18" fill="url(#bkniGold)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <!-- Base -->
+    <path d="M110,412 Q105,425 112,432 Q130,440 225,440 Q320,440 338,432 Q345,425 340,412" fill="url(#bkniBody)" stroke="#0a0a0f" stroke-width="5"/>
+    
+    <!-- Base bottom -->
+    <ellipse cx="225" cy="440" rx="113" ry="14" fill="url(#bkniGold)" stroke="#0a0a0f" stroke-width="4"/>
+    
+    <!-- Outer glow overlay -->
+    <path d="M198,270 Q175,288 158,312 Q140,342 130,368 Q120,392 135,412 L315,412 Q330,392 320,368 Q310,342 292,312 Q275,288 252,270 Z" fill="none" stroke="#D4A820" stroke-width="1" opacity="0.2" filter="url(#bkniGlow)"/>
+  </g>
+</svg>

@@ -14,6 +14,20 @@ import {
   AnimeRookChargeEffect
 } from './CaptureAnimations.js'
 
+/**
+ * AnimationManager — 2026 Chess Edit Style
+ * Every capture is a viral TikTok chess clip moment:
+ * - Impact Frame (1-2 frame black/white flash)
+ * - Zoom Punch (snap zoom in, then snap back)
+ * - Screen-Level Slash Mark
+ * - Manga Speed Lines
+ * - Hit Pause (2-3 frame freeze at impact)
+ * - Screen Shake (directional, bounded)
+ * - Victim Shatter/Dissolve
+ * - Chromatic Aberration burst
+ * - Dark Vignette framing
+ * - Particle Explosion
+ */
 export class AnimationManager {
   constructor(canvasRenderer, pieceRenderer, engine, audioManager, timeController, eventBus) {
     this.canvasRenderer = canvasRenderer
@@ -22,27 +36,32 @@ export class AnimationManager {
     this.audioManager = audioManager
     this.timeController = timeController
     this.eventBus = eventBus
+    this.boardRenderer = null // Set via setBoardRenderer()
     this.camera = new Camera(canvasRenderer)
-    this.camera.isActive = false // managed by Camera.update() dynamically
+    this.camera.isActive = false
 
     this.ghostPieces = []
     this.trails = []
     this.captureEffects = null
     this.movePromise = null
     this.capturePromise = null
-    this.moveTimeline = null
-    this.captureTimeline = null
     this.captureEffect = null
     this.captureTier = null
     this._speedLines = null
+    this._screenSlash = null
     this._activeAnimeCapture = false
-    this._animatingToSquare = -1  // destination square during animation, -1 when none
+    this._animatingToSquare = -1
+    // Screen-level VFX overlays (rendered AFTER camera restore, in screen space)
+    this._screenOverlays = [] // { type, alpha, ... }
   }
 
   getCamera() { return this.camera }
   getGhostPieces() { return this.ghostPieces }
   getTrails() { return this.trails }
   getSpeedLines() { return this._speedLines }
+  getScreenSlash() { return this._screenSlash }
+  getScreenOverlays() { return this._screenOverlays }
+  setBoardRenderer(br) { this.boardRenderer = br }
 
   getCaptureEffects() {
     if (!this.captureEffect) return null
@@ -72,6 +91,7 @@ export class AnimationManager {
     }
   }
 
+  // === NORMAL MOVE ANIMATION — smooth piece glide ===
   animateMove({ from, to, piece, color, orientation, duration }) {
     return new Promise((resolve) => {
       const fromP = this.squareToPixel(from, orientation || 1)
@@ -81,7 +101,7 @@ export class AnimationManager {
       this.ghostPieces = []
       this.pieceRenderer.ghostPiece = null
       this.pieceRenderer.victimGhostPiece = null
-      this._animatingToSquare = to  // track destination square
+      this._animatingToSquare = to
 
       const gp = new GhostPiece(this.pieceRenderer, piece, color, fromP.x, fromP.y, fromP.size)
       gp.targetX = toP.x
@@ -90,7 +110,6 @@ export class AnimationManager {
       gp.duration = dur
       gp.isMoving = true
 
-      // Arc and lean pre-calculation
       const dx = toP.x - fromP.x
       const dy = toP.y - fromP.y
       const dist = Math.sqrt(dx * dx + dy * dy)
@@ -102,41 +121,38 @@ export class AnimationManager {
       const animate = (now) => {
         const elapsed = now - gp.startTime
         const t = Math.min(elapsed / gp.duration, 1)
-
-        // SmoothStep ease-in-out: quick launch, gentle deceleration
+        // SmoothStep ease
         const smooth = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 
         gp.x = fromP.x + (toP.x - fromP.x) * smooth
         gp.y = fromP.y + (toP.y - fromP.y) * smooth
 
-        // Parabolic arc: lift piece for physical weight feel
-        const arcHeight = Math.min(fromP.size * 1.6, dist * 0.16 + fromP.size * 0.08)
+        // Parabolic arc
+        const arcHeight = Math.min(fromP.size * 1.2, dist * 0.12 + fromP.size * 0.06)
         gp.height = arcHeight * Math.sin(t * Math.PI)
         gp.y -= arcHeight * Math.sin(t * Math.PI)
 
-        // Anticipatory lean + settle
-        const leanBase = 0.025
-        gp.rotation = Math.sin(t * Math.PI * 2) * leanBase * Math.cos(gp.travelAngle)
-          + (1 - t) * leanBase * 0.3 * Math.cos(gp.travelAngle)
+        // Subtle lean
+        gp.rotation = Math.sin(t * Math.PI * 2) * 0.02 * Math.cos(gp.travelAngle)
 
         // Squash-and-stretch
         const velocity = smooth * (1 - smooth) * 4
-        gp.scaleX = 1 - velocity * 0.03
-        gp.scaleY = 1 + velocity * 0.05
+        gp.scaleX = 1 - velocity * 0.025
+        gp.scaleY = 1 + velocity * 0.04
 
-        // Shadow: deepens as piece lifts
-        gp.shadowAlpha = 0.10 + Math.sin(t * Math.PI) * 0.10
+        // Shadow depth
+        gp.shadowAlpha = 0.12 + Math.sin(t * Math.PI) * 0.08
 
-        // Dust particles trail for all pieces
-        if (Math.random() < 0.08 && t < 0.92) {
-          const life = 0.15 + Math.random() * 0.25
+        // Dust trail
+        if (Math.random() < 0.06 && t < 0.92) {
+          const life = 0.15 + Math.random() * 0.2
           gp.dustParticles.push({
-            x: gp.x + gp.size / 2 + (Math.random()-0.5) * gp.size * 0.35,
+            x: gp.x + gp.size / 2 + (Math.random()-0.5) * gp.size * 0.3,
             y: gp.y + gp.size * 0.8,
-            size: 0.5 + Math.random() * 1.8,
-            color: 'rgba(200,200,180,0.28)',
-            vx: (Math.random()-0.5) * 8, vy: -Math.random() * 6 - 1,
-            life, maxLife: life, alpha: 0.28
+            size: 0.5 + Math.random() * 1.5,
+            color: 'rgba(200,180,140,0.2)',
+            vx: (Math.random()-0.5) * 6, vy: -Math.random() * 4 - 1,
+            life, maxLife: life, alpha: 0.2
           })
         }
         if (gp.updateDust) gp.updateDust(1/60)
@@ -150,24 +166,20 @@ export class AnimationManager {
         if (t < 1) {
           requestAnimationFrame(animate)
         } else {
+          // Quick settle
           gp.x = toP.x; gp.y = toP.y
           gp.height = 0; gp.rotation = 0
           gp.scaleX = 1; gp.scaleY = 1
-          gp.shadowAlpha = 0.15
-
-          // 40ms fade-out settle before cleanup
           const settleStart = performance.now()
           const settleAnim = (settleNow) => {
-            const st = Math.min((settleNow - settleStart) / 40, 1)
-            const se = 1 - Math.pow(1 - st, 3)
-            gp.alpha = 1 - se
-            gp.shadowAlpha = 0.15 * (1 - se)
-            if (st < 1) { requestAnimationFrame(settleAnim) }
+            const st = Math.min((settleNow - settleStart) / 35, 1)
+            gp.alpha = 1 - st
+            if (st < 1) requestAnimationFrame(settleAnim)
             else {
               gp.alpha = 0; gp.isMoving = false
               this.ghostPieces = []
               this.pieceRenderer.ghostPiece = null
-              this._animatingToSquare = -1  // animation finished
+              this._animatingToSquare = -1
               resolve()
             }
           }
@@ -178,21 +190,28 @@ export class AnimationManager {
     })
   }
 
+  // === CAPTURE ANIMATION — 2026 Chess Edit Style ===
+  // The full cinematic pipeline:
+  //   0-20%: Piece approaches (smooth ease-in with dramatic anticipation)
+  //   20%: IMPACT — Hit pause (3 frames), impact flash, zoom punch, screen slash
+  //   20-35%: Victim destruction (shatter/dissolve), speed lines burst, chromatic peak
+  //   35-60%: Recovery — camera settles, vignette fades, effects dissipate
+  //   60-100%: Ghost fade, particle settle, camera returns to 1.0
   animateCapture({ from, to, piece, color, orientation, victimPiece: vp, victimColor: vc }) {
     return new Promise((resolve) => {
       const fromP = this.squareToPixel(from, orientation || 1)
       const toP = this.squareToPixel(to, orientation || 1)
       const { squareSize, boardOffsetX, boardOffsetY } = this.canvasRenderer
 
-      // Use pre-captured victim info (passed from InputManager before engine move)
       const victimPiece = vp || 0
       const victimColor = vc || 0
 
-      // Clear any leftover ghost pieces from previous animations
       this.ghostPieces = []
       this.pieceRenderer.ghostPiece = null
       this.pieceRenderer.victimGhostPiece = null
-      this._animatingToSquare = to  // track destination square
+      this._animatingToSquare = to
+      this._screenSlash = null
+      this._screenOverlays = []
 
       const gp = new GhostPiece(this.pieceRenderer, piece, color, fromP.x, fromP.y, fromP.size)
       gp.targetX = toP.x
@@ -219,9 +238,12 @@ export class AnimationManager {
       const cx = boardOffsetX + (file + 0.5) * squareSize
       const cy = boardOffsetY + (drawRank + 0.5) * squareSize
 
-      // Determine anime camera behavior based on tier
-      const animeCameraConfig = this._getAnimeCameraConfig(tier)
+      // Travel direction for slash angle and directional shake
+      const dx = toP.x - fromP.x
+      const dy = toP.y - fromP.y
+      const travelAngle = Math.atan2(dy, dx)
 
+      // === CREATE TIER-SPECIFIC EFFECT ===
       switch (tier) {
         case CaptureTier.KNIGHT_DARKNESS:
           this.captureEffect = new AnimeKnightStrikeEffect(
@@ -263,85 +285,135 @@ export class AnimationManager {
         this.captureEffect.start()
       }
 
-      // === ANIME CAMERA WORK: Zoom-from-center (keeps board in frame) ===
-      this.camera.zoomTo(animeCameraConfig.zoomLevel, animeCameraConfig.zoomInDuration)
-      this.camera.vignette = 0.3
+      // === TIMING CONFIG PER TIER ===
+      const timing = this._getTimingConfig(tier)
 
-      // === ANIME SPEED LINES ===
+      // === INITIAL ZOOM-IN (dramatic anticipation) ===
+      this.camera.zoomTo(timing.zoomPeak, timing.zoomInDuration)
+
+      // === PLAY AUDIO ===
+      if (this.audioManager) {
+        this.audioManager.playCapture?.()
+        this.audioManager.playBassImpact?.()
+      }
+
+      // === GENERATE SPEED LINES (for later burst) ===
       this._generateSpeedLines(cx, cy, tier)
 
-      this._impactTriggered = false
-      this._freezeTriggered = false
-      this._zoomOutTriggered = false
-      const effectDuration = (this.captureEffect.duration || 1.0) * 1000
-      const startTime = performance.now()
+      // === GENERATE SCREEN SLASH (entire screen diagonal slash at impact) ===
+      const slashAngle = travelAngle + (Math.random() - 0.5) * 0.3
+      this._screenSlash = {
+        angle: slashAngle,
+        width: 4 + timing.slashWidth,
+        alpha: 0,
+        maxLength: Math.max(this.canvasRenderer.width, this.canvasRenderer.height) * 1.5,
+        color: tier === CaptureTier.ROYAL_DECAP ? '#D4A820' : '#F5F0E8',
+        glowColor: tier === CaptureTier.ROYAL_DECAP ? '#B8960F' : '#F5F0E8'
+      }
 
-      // Travel direction for easing
-      const dx = toP.x - fromP.x
-      const dy = toP.y - fromP.y
-      const travelAngle = Math.atan2(dy, dx)
+      // Track impact triggers
+      this._impactTriggered = false
+      this._zoomPunchTriggered = false
+      this._hitPauseTriggered = false
+      this._screenSlashTriggered = false
+      this._particleBurstTriggered = false
+
+      const effectDuration = (this.captureEffect.duration || 0.6) * 1000
+      const startTime = performance.now()
 
       const animate = (now) => {
         const elapsed = now - startTime
         const rawProgress = Math.min(elapsed / effectDuration, 1)
 
-        // === BUG FIX: Use smooth easing for capture movement (not linear) ===
-        // Cinematic approach feel: slow start, fast middle, gentle arrival
-        const moveEased = Easing.easeInOutCubic(rawProgress)
-        gp.x = fromP.x + (toP.x - fromP.x) * moveEased
-        gp.y = fromP.y + (toP.y - fromP.y) * moveEased
+        // === PHASE 1: APPROACH (0 → impactPoint) ===
+        // Smooth dramatic approach with ease-in-out
+        const impactPoint = timing.impactPoint // e.g. 0.20 = 20% into animation
+        const moveEased = rawProgress < impactPoint
+          ? Easing.easeInOutCubic(rawProgress / impactPoint) // ease into impact
+          : 1 // piece has arrived at impact point
 
-        // Arc lift during capture approach (anime feel)
-        const arcHeight = fromP.size * 0.15
-        gp.y -= arcHeight * Math.sin(rawProgress * Math.PI)
-
-        // === ANIME FREEZE FRAME at impact ===
-        // The capture effect's getCameraInstruction() provides tier-specific timing
-        const camInstr = this.captureEffect.getCameraInstruction ? this.captureEffect.getCameraInstruction(rawProgress) : null
-        if (camInstr) {
-          if (camInstr.freeze && !this._freezeTriggered) {
-            this._freezeTriggered = true
-            this.timeController.hitPause(camInstr.freezeDuration, 0.05)
-          }
-          if (camInstr.shake && !this._impactTriggered) {
-            this._impactTriggered = true
-            this.camera.shake(Math.min(camInstr.shakeIntensity, 6), camInstr.shakeDuration, camInstr.shakeAngle || 0)
-            this.spawnImpactParticles(cx, cy, fromP.size)
-          }
-          if (camInstr.screenFlash) {
-            this.camera.screenFlash = camInstr.screenFlash
-          }
-          if (camInstr.chromaticAberration) {
-            this.camera.chromaticAberration = camInstr.chromaticAberration
-          }
-          if (camInstr.vignette) {
-            this.camera.vignette = camInstr.vignette
-          }
-          if (camInstr.colorGrade) {
-            this.camera.colorGrade = camInstr.colorGrade
-          }
-          if (camInstr.zoom) {
-            this.camera.zoomTo(camInstr.zoom, camInstr.zoomDuration || 0.15)
-          }
-          // NO PANNING — pan instructions ignored to keep board centered
-          // Force post-processing to render every frame during animation
-          this._forcePostProcessing = true
+        // Piece position
+        if (rawProgress < impactPoint) {
+          gp.x = fromP.x + (toP.x - fromP.x) * moveEased
+          gp.y = fromP.y + (toP.y - fromP.y) * moveEased
+          // Arc lift during approach
+          const arcH = fromP.size * 0.12
+          gp.y -= arcH * Math.sin(rawProgress / impactPoint * Math.PI)
+          // Trail during approach
+          gp.trail.push({ x: gp.x + gp.size/2, y: gp.y + gp.size/2 })
+          if (gp.trail.length > 8) gp.trail.shift()
+        } else {
+          gp.x = toP.x
+          gp.y = toP.y
         }
 
-        // === ZOOM OUT after impact phase ===
-        if (rawProgress > animeCameraConfig.zoomOutStart && !this._zoomOutTriggered) {
-          this._zoomOutTriggered = true
-          this.camera.zoomTo(1, animeCameraConfig.zoomOutDuration)
-        }
-
-        // === UPGRADE 2: PARTICLE BURST ===
-        if (!this._impactTriggered && rawProgress >= 0.15) {
+        // === PHASE 2: IMPACT (at impactPoint) ===
+        if (rawProgress >= impactPoint && !this._impactTriggered) {
           this._impactTriggered = true
-          this.spawnImpactParticles(cx, cy, fromP.size)
-          // Camera shake at impact — bounded to 6px max
-          this.camera.shake(Math.min(animeCameraConfig.shakeIntensity, 6), animeCameraConfig.shakeDuration)
+
+          // HIT PAUSE — brief freeze frame for dramatic emphasis
+          if (!this._hitPauseTriggered) {
+            this._hitPauseTriggered = true
+            if (this.timeController) {
+              this.timeController.hitPause(timing.hitPauseDuration, 0.01)
+            }
+          }
+
+          // IMPACT FLASH — brief white/black overlay
+          this.camera.impactFlash(timing.impactColor, timing.impactFlashDuration)
+
+          // ZOOM PUNCH — snap zoom then snap back
+          this.camera.zoomTo(timing.zoomPeak, timing.zoomPunchInDuration)
+
+          // SCREEN SHAKE — directional toward impact
+          this.camera.shake(timing.shakeIntensity, timing.shakeDuration, travelAngle)
+
+          // SCREEN SLASH — diagonal slash across entire screen
+          this._screenSlash.alpha = 1
+          this._screenSlashTriggered = true
+
+          // VIGNETTE + CHROMATIC — dramatic framing
+          this.camera.vignette = timing.vignettePeak
+          this.camera.chromaticAberration = timing.chromaticPeak
+
+          // COLOR GRADE — brief contrast boost
+          this.camera.colorGrade = { contrast: timing.contrastBoost, saturation: 0.3, brightness: 0.1 }
+
+          // PARTICLE BURST at impact point
+          this.spawnImpactParticles(cx, cy, fromP.size, tier)
+
+          // PLAY IMPACT AUDIO
+          if (this.audioManager) {
+            this.audioManager.playBassImpact?.()
+            this.audioManager.playExplosion?.()
+          }
+
+          // Board capture highlight (golden glow on source/target squares)
+          if (this.boardRenderer && this.boardRenderer.triggerCaptureHighlight) {
+            this.boardRenderer.triggerCaptureHighlight(from, to)
+          }
         }
 
+        // === ZOOM PUNCH BACK (short delay after impact) ===
+        const zoomBackPoint = impactPoint + timing.zoomPunchDelay
+        if (rawProgress >= zoomBackPoint && !this._zoomPunchTriggered) {
+          this._zoomPunchTriggered = true
+          this.camera.zoomTo(1, timing.zoomPunchOutDuration)
+        }
+
+        // === SCREEN SLASH FADE ===
+        if (this._screenSlashTriggered && this._screenSlash) {
+          const slashFadeStart = impactPoint + 0.05
+          if (rawProgress > slashFadeStart) {
+            const slashFade = Math.max(0, 1 - (rawProgress - slashFadeStart) / 0.15)
+            this._screenSlash.alpha = slashFade
+            if (slashFade <= 0) {
+              this._screenSlash = null
+            }
+          }
+        }
+
+        // === UPDATE CAPTURE EFFECT ===
         if (this.captureEffect && this.captureEffect.update) {
           this.captureEffect.update(rawProgress)
         }
@@ -349,15 +421,39 @@ export class AnimationManager {
           this.captureEffect.finished = rawProgress >= 1
         }
 
-        // Motion trail for capture approach
-        if (rawProgress > 0.03 && rawProgress < 0.85) {
-          gp.trail.push({ x: gp.x + gp.size/2, y: gp.y + gp.size/2 })
-          if (gp.trail.length > 8) gp.trail.shift()
+        // === EFFECTS DECAY (after impact) ===
+        if (rawProgress > impactPoint + 0.1) {
+          // Vignette fade
+          const vignetteFade = 1 - (rawProgress - impactPoint - 0.1) / 0.3
+          this.camera.vignette = Math.max(0, timing.vignettePeak * vignetteFade)
+
+          // Chromatic fade
+          const chromaticFade = 1 - (rawProgress - impactPoint - 0.1) / 0.25
+          this.camera.chromaticAberration = Math.max(0, timing.chromaticPeak * chromaticFade)
+
+          // Color grade fade
+          const gradeFade = 1 - (rawProgress - impactPoint - 0.1) / 0.2
+          this.camera.colorGrade = {
+            contrast: timing.contrastBoost * Math.max(0, gradeFade),
+            saturation: 0.3 * Math.max(0, gradeFade),
+            brightness: 0.1 * Math.max(0, gradeFade)
+          }
         }
+
+        // === SPEED LINES FADE ===
+        if (this._speedLines && rawProgress > impactPoint + 0.15) {
+          const speedFade = 1 - (rawProgress - impactPoint - 0.15) / 0.2
+          this._speedLines.alpha = Math.max(0, speedFade)
+          if (speedFade <= 0) this._speedLines = null
+        }
+
+        // Force post-processing to render every frame during animation
+        this._forcePostProcessing = true
 
         if (rawProgress < 1) {
           requestAnimationFrame(animate)
         } else {
+          // === CLEANUP ===
           gp.alpha = 0
           this.ghostPieces = []
           this.pieceRenderer.ghostPiece = null
@@ -365,15 +461,18 @@ export class AnimationManager {
           this.captureEffect = null
           this.captureTier = null
           this._speedLines = null
+          this._screenSlash = null
+          this._screenOverlays = []
           this._activeAnimeCapture = false
           this._forcePostProcessing = false
-          this._animatingToSquare = -1  // animation finished
+          this._animatingToSquare = -1
           // Force camera back to neutral — guaranteed reset
-          this.camera.zoomTo(1, 0.25)
+          this.camera.zoomTo(1, 0.2)
           this.camera.vignette = 0
           this.camera.chromaticAberration = 0
           this.camera.screenFlash = { color: [255,255,255], alpha: 0 }
           this.camera.colorGrade = { contrast: 0, saturation: 0, brightness: 0 }
+          this.camera.impactFrame = { active: false, color: 'white', alpha: 0, duration: 0, timer: 0 }
           resolve()
         }
       }
@@ -381,87 +480,176 @@ export class AnimationManager {
     })
   }
 
-  /** Get anime-style camera configuration per capture tier — bounded zoom/shake */
-  _getAnimeCameraConfig(tier) {
-    // Zoom capped at 1.3 max (keeps board visible), shake bounded to 6px
+  // === TIMING CONFIG PER TIER — 2026 Chess Edit Style ===
+  _getTimingConfig(tier) {
+    // All values tuned for maximum dramatic impact while keeping board in frame
+    // Zoom capped at 1.12, shake capped at 4px
     const configs = {
       [CaptureTier.EDIT_DISSOLVE]: {
-        zoomLevel: 1.12, zoomInDuration: 0.2,
-        zoomOutStart: 0.4, zoomOutDuration: 0.25,
-        shakeIntensity: 4, shakeDuration: 0.15
+        impactPoint: 0.20,
+        hitPauseDuration: 0.05,  // 50ms freeze
+        impactFlashDuration: 0.04, // 40ms flash
+        impactColor: 'white',
+        zoomPeak: 1.08,
+        zoomInDuration: 0.15,
+        zoomPunchInDuration: 0.08, // fast punch in
+        zoomPunchOutDuration: 0.20, // smooth return
+        zoomPunchDelay: 0.06,
+        shakeIntensity: 3,
+        shakeDuration: 0.12,
+        vignettePeak: 0.35,
+        chromaticPeak: 0.3,
+        contrastBoost: 0.2,
+        slashWidth: 2
       },
       [CaptureTier.PAWN_SPLIT]: {
-        zoomLevel: 1.15, zoomInDuration: 0.15,
-        zoomOutStart: 0.35, zoomOutDuration: 0.2,
-        shakeIntensity: 5, shakeDuration: 0.12
+        impactPoint: 0.18,
+        hitPauseDuration: 0.06,
+        impactFlashDuration: 0.05,
+        impactColor: 'white',
+        zoomPeak: 1.10,
+        zoomInDuration: 0.12,
+        zoomPunchInDuration: 0.06,
+        zoomPunchOutDuration: 0.18,
+        zoomPunchDelay: 0.05,
+        shakeIntensity: 3.5,
+        shakeDuration: 0.12,
+        vignettePeak: 0.4,
+        chromaticPeak: 0.35,
+        contrastBoost: 0.25,
+        slashWidth: 3
       },
       [CaptureTier.KNIGHT_DARKNESS]: {
-        zoomLevel: 1.2, zoomInDuration: 0.15,
-        zoomOutStart: 0.5, zoomOutDuration: 0.25,
-        shakeIntensity: 6, shakeDuration: 0.18
+        impactPoint: 0.22,
+        hitPauseDuration: 0.08,
+        impactFlashDuration: 0.06,
+        impactColor: 'black',  // Knight = darkness
+        zoomPeak: 1.12,
+        zoomInDuration: 0.12,
+        zoomPunchInDuration: 0.05,
+        zoomPunchOutDuration: 0.25,
+        zoomPunchDelay: 0.06,
+        shakeIntensity: 4,
+        shakeDuration: 0.15,
+        vignettePeak: 0.5,
+        chromaticPeak: 0.45,
+        contrastBoost: 0.35,
+        slashWidth: 4
       },
       [CaptureTier.QUEEN_SLASH]: {
-        zoomLevel: 1.25, zoomInDuration: 0.12,
-        zoomOutStart: 0.55, zoomOutDuration: 0.3,
-        shakeIntensity: 6, shakeDuration: 0.2
+        impactPoint: 0.15,
+        hitPauseDuration: 0.10,
+        impactFlashDuration: 0.07,
+        impactColor: 'white',
+        zoomPeak: 1.12,
+        zoomInDuration: 0.10,
+        zoomPunchInDuration: 0.04,
+        zoomPunchOutDuration: 0.25,
+        zoomPunchDelay: 0.05,
+        shakeIntensity: 4,
+        shakeDuration: 0.18,
+        vignettePeak: 0.5,
+        chromaticPeak: 0.5,
+        contrastBoost: 0.3,
+        slashWidth: 5
       },
       [CaptureTier.ROOK_PATH]: {
-        zoomLevel: 1.18, zoomInDuration: 0.2,
-        zoomOutStart: 0.45, zoomOutDuration: 0.25,
-        shakeIntensity: 6, shakeDuration: 0.18
+        impactPoint: 0.20,
+        hitPauseDuration: 0.07,
+        impactFlashDuration: 0.05,
+        impactColor: 'white',
+        zoomPeak: 1.10,
+        zoomInDuration: 0.15,
+        zoomPunchInDuration: 0.06,
+        zoomPunchOutDuration: 0.20,
+        zoomPunchDelay: 0.05,
+        shakeIntensity: 3.5,
+        shakeDuration: 0.14,
+        vignettePeak: 0.4,
+        chromaticPeak: 0.35,
+        contrastBoost: 0.25,
+        slashWidth: 3
       },
       [CaptureTier.EPIC_CLASH]: {
-        zoomLevel: 1.28, zoomInDuration: 0.12,
-        zoomOutStart: 0.5, zoomOutDuration: 0.3,
-        shakeIntensity: 6, shakeDuration: 0.22
+        impactPoint: 0.18,
+        hitPauseDuration: 0.10,
+        impactFlashDuration: 0.07,
+        impactColor: 'white',
+        zoomPeak: 1.12,
+        zoomInDuration: 0.10,
+        zoomPunchInDuration: 0.04,
+        zoomPunchOutDuration: 0.30,
+        zoomPunchDelay: 0.05,
+        shakeIntensity: 4,
+        shakeDuration: 0.20,
+        vignettePeak: 0.55,
+        chromaticPeak: 0.5,
+        contrastBoost: 0.35,
+        slashWidth: 5
       },
       [CaptureTier.ROYAL_DECAP]: {
-        zoomLevel: 1.3, zoomInDuration: 0.1,
-        zoomOutStart: 0.6, zoomOutDuration: 0.35,
-        shakeIntensity: 6, shakeDuration: 0.25
+        impactPoint: 0.15,
+        hitPauseDuration: 0.12,
+        impactFlashDuration: 0.08,
+        impactColor: 'black',  // Royal death = darkness
+        zoomPeak: 1.12,
+        zoomInDuration: 0.08,
+        zoomPunchInDuration: 0.03,
+        zoomPunchOutDuration: 0.35,
+        zoomPunchDelay: 0.04,
+        shakeIntensity: 4,
+        shakeDuration: 0.25,
+        vignettePeak: 0.6,
+        chromaticPeak: 0.6,
+        contrastBoost: 0.4,
+        slashWidth: 6
       }
     }
     return configs[tier] || configs[CaptureTier.EDIT_DISSOLVE]
   }
 
-  // === UPGRADE 3: CHECK / CHECKMATE DRAMA ===
+  // === CHECK / CHECKMATE DRAMA ===
   zoomToKing(kingSquare, orientation, intensity = 1) {
-    // Zoom-from-center only — no panning
-    this.camera.zoomTo(Math.min(1.2 * intensity, 1.3), 0.4)
+    this.camera.zoomTo(Math.min(1.08 * intensity, 1.12), 0.3)
     this.camera.vignette = 0.4 * intensity
-    this.camera.screenFlash = { color: [220, 30, 30], alpha: 0.4 * intensity }
-    this.camera.chromaticAberration = 0.3 * intensity
-    this.camera.shake(Math.min(5 * intensity, 6), 0.2)
+    this.camera.screenFlash = { color: [220, 30, 30], alpha: 0.3 * intensity }
+    this.camera.chromaticAberration = 0.25 * intensity
+    this.camera.shake(Math.min(3 * intensity, 4), 0.18)
   }
 
   resetCameraView() {
-    // No panning needed — just zoom back to 1 and clear effects
-    this.camera.zoomTo(1, 0.3)
+    this.camera.zoomTo(1, 0.25)
     this.camera.vignette = 0
     this.camera.chromaticAberration = 0
     this.camera.screenFlash = { color: [255,255,255], alpha: 0 }
     this.camera.colorGrade = { contrast: 0, saturation: 0, brightness: 0 }
+    this.camera.impactFrame = { active: false, color: 'white', alpha: 0, duration: 0, timer: 0 }
   }
 
-  // Spawn particle burst for capture impact
-  spawnImpactParticles(cx, cy, pieceSize) {
-    const count = 12 + Math.floor(Math.random() * 10)
+  // === PARTICLE BURST — 2026 style spark explosion ===
+  spawnImpactParticles(cx, cy, pieceSize, tier = CaptureTier.EDIT_DISSOLVE) {
+    const intensity = tier === CaptureTier.ROYAL_DECAP ? 3 :
+                     tier === CaptureTier.EPIC_CLASH ? 2.5 :
+                     tier === CaptureTier.QUEEN_SLASH ? 2 :
+                     tier === CaptureTier.KNIGHT_DARKNESS ? 2 : 1.5
+
+    const count = Math.floor(16 * intensity)
     for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6
-      const speed = 60 + Math.random() * 180
-      const life = 0.3 + Math.random() * 0.4
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8
+      const speed = 80 + Math.random() * 200 * intensity
+      const life = 0.25 + Math.random() * 0.4
+      const colors = ['#B8960F', '#D4A820', '#F5F0E8', '#ff6600', '#ffaa00', '#E8DCCA']
       this.ghostPieces.push({
         x: cx, y: cy,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 20 - Math.random() * 60,
-        size: pieceSize * (0.03 + Math.random() * 0.08),
+        vy: Math.sin(angle) * speed - 30 - Math.random() * 50,
+        size: pieceSize * (0.04 + Math.random() * 0.08 * intensity),
         alpha: 1, rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 15,
+        rotSpeed: (Math.random() - 0.5) * 12,
         life, maxLife: life,
-        color: ['#B8960F','#ff6600','#F5F0E8','#ffaa00'][Math.floor(Math.random()*4)],
+        color: colors[Math.floor(Math.random() * colors.length)],
         isParticle: true,
         drawShadow() {}, drawTrail() {}, drawDust() {}, shadows: [],
-        alpha: 1.0,
         pieceRenderer: { drawPiece() {} },
         piece: 0, color: 0, size: 1, scaleX: 1, scaleY: 1, rotation: 0,
         height: 0, shadowAlpha: 0, trail: [], config: null, travelAngle: 0,
@@ -469,8 +657,16 @@ export class AnimationManager {
           if (this.alpha <= 0.01) return
           ctx.save(); ctx.globalAlpha = this.alpha
           ctx.translate(this.x, this.y); ctx.rotate(this.rotation)
-          ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 6
-          ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI * 2); ctx.fill()
+          ctx.fillStyle = this.color
+          ctx.shadowColor = this.color; ctx.shadowBlur = 8
+          // Diamond-shaped sparks (2026 chess edit style)
+          ctx.beginPath()
+          ctx.moveTo(0, -this.size)
+          ctx.lineTo(this.size * 0.5, 0)
+          ctx.lineTo(0, this.size * 0.4)
+          ctx.lineTo(-this.size * 0.5, 0)
+          ctx.closePath()
+          ctx.fill()
           ctx.restore()
         },
         updateDust() {}
@@ -478,7 +674,7 @@ export class AnimationManager {
     }
   }
 
-  // Update camera + ghost pieces (particles and dust)
+  // Update camera + ghost pieces
   update(dt) {
     this.camera.update(dt)
     for (let i = this.ghostPieces.length - 1; i >= 0; i--) {
@@ -488,7 +684,7 @@ export class AnimationManager {
         gp.alpha = Math.max(0, gp.life / gp.maxLife)
         gp.x += gp.vx * dt
         gp.y += gp.vy * dt
-        gp.vy += 400 * dt // gravity
+        gp.vy += 350 * dt
         gp.rotation += gp.rotSpeed * dt
         if (gp.life <= 0) this.ghostPieces.splice(i, 1)
       } else if (gp.updateDust) {
@@ -528,34 +724,34 @@ export class AnimationManager {
     this.camera.setBoardCenter(boardCenterX, boardCenterY)
   }
 
-  // Smooth easing function
   _smoothStep(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
   }
 
-  // ANIME: Generate manga-style radial speed lines at impact point
+  // === MANGA SPEED LINES ===
   _generateSpeedLines(cx, cy, tier) {
-    const lineCount = tier === CaptureTier.ROYAL_DECAP ? 24 :
-                     tier === CaptureTier.EPIC_CLASH ? 20 :
-                     tier === CaptureTier.KNIGHT_DARKNESS ? 16 : 12
+    const lineCount = tier === CaptureTier.ROYAL_DECAP ? 28 :
+                     tier === CaptureTier.EPIC_CLASH ? 24 :
+                     tier === CaptureTier.QUEEN_SLASH ? 20 :
+                     tier === CaptureTier.KNIGHT_DARKNESS ? 18 : 14
     const { squareSize } = this.canvasRenderer
-    const baseLength = squareSize * 2
+    const baseLength = squareSize * 2.5
 
     const lines = []
     for (let i = 0; i < lineCount; i++) {
-      const angle = (Math.PI * 2 * i) / lineCount + (Math.random() - 0.5) * 0.15
-      const length = baseLength * (0.8 + Math.random() * 0.6)
-      const width = 1.5 + Math.random() * 2.5
+      const angle = (Math.PI * 2 * i) / lineCount + (Math.random() - 0.5) * 0.2
+      const length = baseLength * (0.7 + Math.random() * 0.8)
+      const width = 2 + Math.random() * 3
       lines.push({ angle, length, width })
     }
 
     this._speedLines = {
-      cx, cy, lines, alpha: 1, rotation: 0,
+      cx, cy, lines, alpha: 0, rotation: 0,  // alpha starts at 0, bursts at impact
       color: '#B8960F'
     }
   }
 
-  // ANIME: Render manga-style speed lines (called from Renderer)
+  // Render manga-style speed lines (called from Renderer in screen space)
   renderSpeedLines(ctx) {
     if (!this._speedLines || this._speedLines.alpha <= 0.01) return
     const { cx, cy, lines, alpha, rotation, color } = this._speedLines
@@ -568,31 +764,92 @@ export class AnimationManager {
     for (const line of lines) {
       const cos = Math.cos(line.angle)
       const sin = Math.sin(line.angle)
-      const startDist = 15
+      const startDist = 20
 
-      // Glow layer
+      // Glow layer (wide, dim)
       ctx.beginPath()
       ctx.moveTo(cos * startDist, sin * startDist)
       ctx.lineTo(cos * (startDist + line.length), sin * (startDist + line.length))
-      ctx.strokeStyle = 'rgba(245, 240, 232, 0.3)'
-      ctx.lineWidth = line.width + 3
-      ctx.globalAlpha = alpha * 0.3
+      ctx.strokeStyle = 'rgba(245, 240, 232, 0.25)'
+      ctx.lineWidth = line.width + 6
+      ctx.globalAlpha = alpha * 0.25
       ctx.lineCap = 'round'
       ctx.stroke()
 
-      // Core line (warm gold)
+      // Core line (gold)
       ctx.globalAlpha = alpha
       ctx.beginPath()
       ctx.moveTo(cos * startDist, sin * startDist)
       ctx.lineTo(cos * (startDist + line.length), sin * (startDist + line.length))
       ctx.strokeStyle = color
       ctx.lineWidth = line.width
-      ctx.shadowColor = color
-      ctx.shadowBlur = 12
+      ctx.shadowColor = color; ctx.shadowBlur = 15
       ctx.lineCap = 'round'
       ctx.stroke()
     }
 
+    ctx.restore()
+  }
+
+  // Render screen-level slash (diagonal slash across entire viewport)
+  renderScreenSlash(ctx) {
+    if (!this._screenSlash || this._screenSlash.alpha <= 0.01) return
+    const { angle, width, alpha, maxLength, color, glowColor } = this._screenSlash
+    const cx = this.canvasRenderer.width / 2
+    const cy = this.canvasRenderer.height / 2
+
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    const halfLen = maxLength * 0.5
+
+    ctx.save()
+    // Glow layer (wide, warm white)
+    ctx.globalAlpha = alpha * 0.35
+    ctx.strokeStyle = glowColor
+    ctx.lineWidth = width + 14
+    ctx.lineCap = 'round'
+    ctx.shadowColor = glowColor; ctx.shadowBlur = 30
+    ctx.beginPath()
+    ctx.moveTo(cx - cos * halfLen, cy - sin * halfLen)
+    ctx.lineTo(cx + cos * halfLen, cy + sin * halfLen)
+    ctx.stroke()
+
+    // Core slash (gold/bright)
+    ctx.globalAlpha = alpha * 0.9
+    ctx.strokeStyle = color
+    ctx.lineWidth = width
+    ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 20
+    ctx.beginPath()
+    ctx.moveTo(cx - cos * halfLen * 0.8, cy - sin * halfLen * 0.8)
+    ctx.lineTo(cx + cos * halfLen * 0.8, cy + sin * halfLen * 0.8)
+    ctx.stroke()
+
+    // White-hot center (thin, bright)
+    ctx.globalAlpha = alpha
+    ctx.strokeStyle = '#F5F0E8'
+    ctx.lineWidth = width * 0.3
+    ctx.shadowColor = '#F5F0E8'; ctx.shadowBlur = 10
+    ctx.beginPath()
+    ctx.moveTo(cx - cos * halfLen * 0.5, cy - sin * halfLen * 0.5)
+    ctx.lineTo(cx + cos * halfLen * 0.5, cy + sin * halfLen * 0.5)
+    ctx.stroke()
+
+    ctx.restore()
+  }
+
+  // Render impact frame overlay (full-screen flash)
+  renderImpactFrame(ctx) {
+    if (!this.camera.impactFrame || !this.camera.impactFrame.active || this.camera.impactFrame.alpha <= 0.01) return
+    const { color, alpha } = this.camera.impactFrame
+
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.85  // strong but not full white
+    if (color === 'black') {
+      ctx.fillStyle = '#0a0805'
+    } else {
+      ctx.fillStyle = '#F5F0E8'
+    }
+    ctx.fillRect(0, 0, this.canvasRenderer.width, this.canvasRenderer.height)
     ctx.restore()
   }
 }

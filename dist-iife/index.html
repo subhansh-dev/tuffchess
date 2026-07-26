@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuffChess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="./bundle.js"></script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game-canvas"></canvas>
+    <div id="capture-flash"></div>
+  </div>
+
+  <!-- Loading Screen — like unrolling a weathered parchment -->
+  <div id="loading-screen">
+    <div class="loading-crest">
+      <svg viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" class="loading-chesspiece">
+        <defs>
+          <linearGradient id="crestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#D4A820" />
+            <stop offset="100%" style="stop-color:#8B7355" />
+          </linearGradient>
+        </defs>
+        <path d="M32 6 C32 6 46 16 42 34 L38 58 C38 72 26 72 26 58 L22 34 C18 16 32 6 32 6 Z" fill="url(#crestGrad)" stroke="#2C2C2C" stroke-width="2.5"/>
+        <path d="M28 18 C28 18 34 22 30 36 C26 22 28 18 28 18 Z" fill="#F5F0E8" opacity="0.5"/>
+        <circle cx="32" cy="72" r="16" fill="url(#crestGrad)" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="loading-title">TuffChess</div>
+    <p class="loading-subtitle">where every capture is a duel</p>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill"></div>
+    </div>
+    <p class="loading-status">Preparing the board...</p>
+  </div>
+
+  <!-- Main Menu -->
+  <div id="main-menu" class="screen">
+    <div class="menu-logo">
+      <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="loadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#B8960F" />
+            <stop offset="100%" style="stop-color:#8B7355" />
+          </linearGradient>
+        </defs>
+        <path d="M64 8 C64 8 80 20 76 40 L72 70 C72 90 56 90 56 70 L52 40 C48 20 64 8 64 8 Z" fill="url(#loadGrad)" stroke="#2C2C2C" stroke-width="3"/>
+        <path d="M60 25 C60 25 68 30 64 45 C60 30 60 25 60 25 Z" fill="#F5F0E8" opacity="0.6"/>
+        <circle cx="64" cy="100" r="28" fill="url(#loadGrad)" opacity="0.7"/>
+      </svg>
+    </div>
+    <h1 class="menu-title">TuffChess</h1>
+    <p class="menu-subtitle">where every capture is a duel</p>
+
+    <div class="menu-buttons">
+      <button class="btn btn-primary" data-action="play">
+        <span>&#9823;</span> Play
+      </button>
+      <button class="btn btn-secondary" data-action="open-history">
+        <span>&#9776;</span> History
+      </button>
+    </div>
+
+    <div class="menu-rating">
+      <div class="menu-rating-label">Your Rating</div>
+      <div class="menu-rating-value" id="menu-elo">1500</div>
+    </div>
+  </div>
+
+  <!-- Match History -->
+  <div id="match-history" class="screen">
+    <div class="history-container">
+      <div class="history-header">
+        <h2 class="section-title">Match History</h2>
+        <button class="btn btn-secondary btn-small" data-action="close-history">Back</button>
+      </div>
+      <div class="history-stats" id="history-stats">
+        <div class="stat-item"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Games</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-wins">0</span><span class="stat-label">Wins</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-losses">0</span><span class="stat-label">Losses</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-draws">0</span><span class="stat-label">Draws</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-winrate">0%</span><span class="stat-label">Win Rate</span></div>
+      </div>
+      <div class="history-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="bot">vs Bot</button>
+        <button class="filter-btn" data-filter="friend">vs Friend</button>
+        <button class="filter-btn" data-filter="win">Wins</button>
+        <button class="filter-btn" data-filter="loss">Losses</button>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- Mode Select -->
+  <div id="mode-select" class="screen">
+    <h2 class="section-title">Choose Mode</h2>
+    <div class="mode-cards">
+      <div class="mode-card" data-action="select-bot">
+        <div class="mode-icon">&#9823;</div>
+        <div class="mode-name">vs Bot</div>
+        <div class="mode-desc">Play against the computer with adjustable difficulty</div>
+      </div>
+      <div class="mode-card" data-action="select-friend">
+        <div class="mode-icon">&#9818;</div>
+        <div class="mode-name">vs Friend</div>
+        <div class="mode-desc">Play locally with a friend on the same device</div>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-small" data-action="back-to-menu">Back</button>
+  </div>
+
+  <!-- Time Control Select -->
+  <div id="time-control" class="screen">
+    <h2 class="section-title">Time Control</h2>
+    <div class="time-cards">
+      <div class="time-card" data-time="600" data-action="select-time">
+        <div class="time-value">10</div>
+        <div class="time-unit">min</div>
+        <div class="time-label">Rapid</div>
+      </div>
+      <div class="time-card" data-time="300" data-action="select-time">
+        <div class="time-value">5</div>
+        <div class="time-unit">min</div>
+        <div class="time-label">Blitz</div>
+      </div>
+      <div class="time-card" data-time="180" data-action="select-time">
+        <div class="time-value">3</div>
+        <div class="time-unit">min</div>
+        <div class="time-label">Blitz</div>
+      </div>
+      <div class="time-card" data-time="60" data-action="select-time">
+        <div class="time-value">1</div>
+        <div class="time-unit">min</div>
+        <div class="time-label">Bullet</div>
+      </div>
+      <div class="time-card" data-time="0" data-action="select-time">
+        <div class="time-value">&infin;</div>
+        <div class="time-unit"></div>
+        <div class="time-label">No Clock</div>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
+  </div>
+
+  <!-- Bot Difficulty -->
+  <div id="bot-difficulty" class="screen">
+    <h2 class="section-title">Bot Difficulty</h2>
+    <div class="difficulty-cards">
+      <div class="diff-card" data-difficulty="beginner" data-action="select-difficulty">
+        <div class="diff-name">Beginner</div>
+        <div class="diff-elo">~800 ELO</div>
+      </div>
+      <div class="diff-card" data-difficulty="intermediate" data-action="select-difficulty">
+        <div class="diff-name">Intermediate</div>
+        <div class="diff-elo">~1200 ELO</div>
+      </div>
+      <div class="diff-card" data-difficulty="advanced" data-action="select-difficulty">
+        <div class="diff-name">Advanced</div>
+        <div class="diff-elo">~1600 ELO</div>
+      </div>
+      <div class="diff-card" data-difficulty="expert" data-action="select-difficulty">
+        <div class="diff-name">Expert</div>
+        <div class="diff-elo">~2000 ELO</div>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-small" data-action="back-to-mode-select">Back</button>
+  </div>
+
+  <!-- Game HUD -->
+  <div id="game-hud" class="screen">
+    <!-- Top player (opponent) — brass-framed label -->
+    <div class="player-bar top">
+      <div class="player-avatar">B</div>
+      <div class="player-info">
+        <div class="player-name">Bot</div>
+        <div class="player-rating">ELO 1200</div>
+      </div>
+      <div class="player-clock" id="clock-top">--:--</div>
+      <div class="thinking-indicator">
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+      </div>
+    </div>
+
+    <!-- Bottom player (human) — brass-framed label -->
+    <div class="player-bar bottom active">
+      <div class="player-avatar">Y</div>
+      <div class="player-info">
+        <div class="player-name">You</div>
+        <div class="player-rating">ELO 1500</div>
+      </div>
+      <div class="player-clock" id="clock-bottom">--:--</div>
+    </div>
+
+    <!-- Tool buttons -->
+    <div class="hud-tools">
+      <button class="btn-icon" data-action="toggle-sound" title="Toggle Sound">&#9834;</button>
+      <button class="btn-icon" data-action="flip-board" title="Flip Board">&#8645;</button>
+      <button class="btn-icon" data-action="undo-move" title="Undo Move">&#8630;</button>
+      <button class="btn-icon" data-action="toggle-moves" title="Move List">&#9776;</button>
+      <button class="btn-icon" data-action="share-game" title="Share Game">&#128279;</button>
+      <button class="btn-icon" data-action="resign-game" title="Resign">&#9872;</button>
+      <button class="btn-icon" data-action="back-to-menu-game" title="Menu">&#8962;</button>
+    </div>
+
+    <!-- Replay controls (hidden during live play) -->
+    <div class="replay-controls" id="replay-controls">
+      <button class="btn-icon replay-btn" data-action="replay-start" title="Start">&#9198;</button>
+      <button class="btn-icon replay-btn" data-action="replay-back" title="Previous Move">&#9664;</button>
+      <button class="btn-icon replay-btn replay-play-btn" data-action="replay-play" title="Play/Pause">&#9654;</button>
+      <button class="btn-icon replay-btn" data-action="replay-forward" title="Next Move">&#9654;</button>
+      <button class="btn-icon replay-btn" data-action="replay-end" title="End">&#9197;</button>
+      <button class="btn-icon replay-btn" data-action="replay-exit" title="Exit Replay">&#10005;</button>
+    </div>
+
+    <!-- Move list panel -->
+    <div class="move-list-panel">
+      <div class="move-list-header">Moves</div>
+      <div class="move-list-body"></div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal — like lifting a flap on an old leather-bound box -->
+  <div id="game-over-modal" class="screen">
+    <div class="game-over-card">
+      <div class="game-over-result">Checkmate</div>
+      <div class="game-over-detail">White wins!</div>
+      <div class="rating-change positive">+15</div>
+      <div class="rating-new">New Rating: 1515</div>
+      <div class="game-over-buttons">
+        <button class="btn btn-primary btn-small" data-action="rematch">Rematch</button>
+        <button class="btn btn-secondary btn-small" data-action="back-to-menu-gameover">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion Modal — leather-bound box flap -->
+  <div id="promotion-modal" class="screen">
+    <div class="promotion-card">
+      <div class="promotion-title">Promote Pawn</div>
+      <div class="promotion-pieces">
+        <div class="promotion-piece" data-piece="q"><img src="./assets/pieces/white-queen.svg" alt="Queen"></div>
+        <div class="promotion-piece" data-piece="r"><img src="./assets/pieces/white-rook.svg" alt="Rook"></div>
+        <div class="promotion-piece" data-piece="b"><img src="./assets/pieces/white-bishop.svg" alt="Bishop"></div>
+        <div class="promotion-piece" data-piece="n"><img src="./assets/pieces/white-knight.svg" alt="Knight"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div id="share-modal" class="screen">
+    <div class="share-card">
+      <div class="share-title">Share Game</div>
+      <div class="share-desc">Send this link to your friend to continue the game</div>
+      <input type="text" class="share-url" readonly>
+      <div class="share-buttons">
+        <button class="btn btn-primary btn-small" data-action="copy-share-url">Copy Link</button>
+        <button class="btn btn-secondary btn-small" data-action="close-share">Close</button>
+      </div>
+      <div class="copied-msg">Copied to clipboard!</div>
+    </div>
+  </div>
+
+</body>
+</html>

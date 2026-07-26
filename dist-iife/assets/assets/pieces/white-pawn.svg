@@ -1,0 +1,48 @@
+<svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wpBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5f0e8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ede5d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0d6c6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wpGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A820;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8960F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wpHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+    <filter id="wpShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0a0a0f" flood-opacity="0.4"/>
+    </filter>
+    <filter id="wpGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#f5f0e8" flood-opacity="0.3" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#wpShadow)">
+    <!-- Head (rounded ball) -->
+    <circle cx="225" cy="115" r="52" fill="url(#wpBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Head highlight -->
+    <circle cx="208" cy="102" r="25" fill="url(#wpHighlight)" opacity="0.5"/>
+    <!-- Collar/neck transition -->
+    <path d="M178,167 Q178,180 175,192 L172,208 Q168,222 172,238 L178,255 Q182,262 188,268 L262,268 Q268,262 272,255 L278,238 Q282,222 278,208 L275,192 Q272,180 272,167" fill="url(#wpBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Gold collar ring -->
+    <ellipse cx="225" cy="192" rx="52" ry="12" fill="url(#wpGold)" stroke="#1a1a2e" stroke-width="3"/>
+    <!-- Body -->
+    <path d="M188,268 Q168,285 155,312 Q140,342 132,368 Q122,392 135,412 L315,412 Q328,392 318,368 Q310,342 295,312 Q282,285 262,268 Z" fill="url(#wpBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Inner highlight on body -->
+    <path d="M215,285 Q205,305 200,342 Q195,380 205,402 L240,402 Q235,380 240,342 Q245,305 250,285 Z" fill="url(#wpHighlight)" opacity="0.4"/>
+    <!-- Base ring -->
+    <ellipse cx="225" cy="412" rx="115" ry="18" fill="url(#wpGold)" stroke="#1a1a2e" stroke-width="4"/>
+    <!-- Base -->
+    <path d="M110,412 Q105,425 112,432 Q130,440 225,440 Q320,440 338,432 Q345,425 340,412" fill="url(#wpBody)" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- Base bottom -->
+    <ellipse cx="225" cy="440" rx="113" ry="14" fill="url(#wpGold)" stroke="#1a1a2e" stroke-width="4"/>
+    <!-- Inner glow overlay -->
+    <path d="M188,268 Q168,285 155,312 Q140,342 132,368 Q122,392 135,412 L315,412 Q328,392 318,368 Q310,342 295,312 Q282,285 262,268 Z" fill="none" stroke="#f5f0e8" stroke-width="2" opacity="0.4" filter="url(#wpGlow)"/>
+  </g>
+</svg>

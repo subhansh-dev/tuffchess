@@ -122,6 +122,7 @@ class Game {
 
       // Connect animation manager to renderer for speed line rendering
       this.renderer.setAnimationManager(this.animationManager)
+      this.animationManager.setBoardRenderer(this.renderer.boardRenderer)
 
       this.ui.showLoading(50, 'Setting up effects...')
 
@@ -612,13 +613,20 @@ loop(time) {
           const hasActiveAnim = this.animationManager.captureEffect && !this.animationManager.captureEffect.finished
           const cam = this.animationManager.getCamera?.()
           const hasActiveCamera = cam && cam.isActive
+          // Force post-processing render during active capture animations
           if (hasActiveAnim || hasActiveCamera) {
             this.postProcessing._forceRender = true
           }
           if (cam) {
             this.postProcessing.setChromatic(cam.chromaticAberration > 0.01 ? cam.chromaticAberration : 0, 0)
             this.postProcessing.setVignette(cam.vignette > 0.01 ? cam.vignette : 0)
-            this.postProcessing.setScreenFlash(cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.color : [255,255,255], cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.alpha : 0)
+            // Screen flash: use camera's screenFlash, but also add impact frame color if active
+            const flashColor = cam.impactFrame?.active && cam.impactFrame.color === 'white'
+              ? [255, 255, 255] : cam.impactFrame?.active && cam.impactFrame.color === 'black'
+              ? [20, 15, 10] : cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.color : [255,255,255]
+            const flashAlpha = cam.impactFrame?.active ? cam.impactFrame.alpha * 0.85
+              : cam.screenFlash?.alpha > 0.01 ? cam.screenFlash.alpha : 0
+            this.postProcessing.setScreenFlash(flashColor, flashAlpha)
             this.postProcessing.setColorGrade(cam.colorGrade?.contrast || 0, cam.colorGrade?.saturation || 0, cam.colorGrade?.brightness || 0)
           } else {
             this.postProcessing.setChromatic(0, 0)
@@ -633,8 +641,10 @@ loop(time) {
         }
       }
 
-      if (this.renderer && this.renderer.particleSystem) {
-        this.renderer.particleSystem.render(this.ctx)
+      // Impact frame rendering (direct overlay — no post-processing needed)
+      // This is a brief full-screen flash rendered AFTER everything else
+      if (this.animationManager && this.animationManager.renderImpactFrame) {
+        this.animationManager.renderImpactFrame(this.ctx)
       }
     } catch(e) {
       console.error('Render loop error:', e)

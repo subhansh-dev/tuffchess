@@ -1,6 +1,18 @@
 import { ParticleSystem, ParticlePalettes } from '../animation/ParticleSystem.js'
 import { CaptureTier } from '../animation/CaptureAnimations.js'
 
+/**
+ * Renderer — 2026 Chess Edit Style
+ * Renders board + pieces inside camera transform (board space),
+ * then renders all VFX overlays in screen space AFTER camera restore.
+ *
+ * Screen-space effects order (bottom to top):
+ *   1. Capture effect (slash lines, darkening, flashes)
+ *   2. Screen-level slash (diagonal across entire viewport)
+ *   3. Speed lines (manga radial burst)
+ *   4. Impact frame (brief white/black overlay)
+ *   5. Particle system
+ */
 export class Renderer {
   constructor(canvasRenderer, pieceRenderer, boardRenderer) {
     this.canvasRenderer = canvasRenderer
@@ -54,18 +66,29 @@ export class Renderer {
       camera.restoreTransform(ctx)
     }
 
-    // === SCREEN SPACE: all overlay effects rendered WITHOUT camera transform ===
-    // Capture effects (slash lines, flashes, darkening, vignette — all in screen space)
+    // === SCREEN SPACE: all overlay effects WITHOUT camera transform ===
+
+    // 1. Capture effects (slash lines, darkening, vignette — in screen space)
     if (captureEffects) {
       this.renderCaptureEffects(ctx, captureEffects)
     }
 
-    // ANIME: Speed lines in SCREEN SPACE (so they don't zoom/move with board)
+    // 2. Screen-level slash (diagonal slash across entire viewport — 2026 style)
+    if (this.animationManager && this.animationManager.renderScreenSlash) {
+      this.animationManager.renderScreenSlash(ctx)
+    }
+
+    // 3. Speed lines (manga radial burst in screen space)
     if (this.animationManager && this.animationManager.renderSpeedLines) {
       this.animationManager.renderSpeedLines(ctx)
     }
 
-    // Particle system in screen space
+    // 4. Impact frame (brief full-screen white/black flash)
+    if (this.animationManager && this.animationManager.renderImpactFrame) {
+      this.animationManager.renderImpactFrame(ctx)
+    }
+
+    // 5. Particle system in screen space
     if (this.particleSystem) {
       this.particleSystem.render(ctx)
     }
@@ -79,7 +102,7 @@ export class Renderer {
   }
 
   renderBackground(ctx, width, height) {
-    // Warm aged paper/burlap background — like sitting on a rich wooden desk
+    // Warm aged wood background
     const gradient = ctx.createLinearGradient(0, 0, width, height)
     gradient.addColorStop(0, '#4A3C2A')
     gradient.addColorStop(0.3, '#3D3020')
@@ -88,7 +111,7 @@ export class Renderer {
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Add subtle warm light spots to simulate ambient light on a wooden surface
+    // Subtle warm light spots
     ctx.globalAlpha = 0.06
     const lightGradient1 = ctx.createRadialGradient(
       width * 0.3, height * 0.3, 0,
@@ -119,13 +142,12 @@ export class Renderer {
 
     const pr = this.pieceRenderer
 
-    // Defensive: if ghostPiece exists but animation is done, clear it
+    // Clear stale ghost pieces
     if (pr.ghostPiece && pr.ghostPiece.alpha <= 0.01) {
       pr.ghostPiece = null
       pr.victimGhostPiece = null
     }
 
-    // Get the destination square that's being animated (ghost piece covers it)
     const animatingToSquare = this.animationManager?._animatingToSquare ?? -1
 
     for (let sq = 0; sq < 64; sq++) {
@@ -133,7 +155,7 @@ export class Renderer {
       const color = colors[sq]
       if (piece === 0) continue
 
-      // Skip destination square during animation — ghost piece handles it
+      // Skip destination square during animation
       if (sq === animatingToSquare && pr.ghostPiece && pr.ghostPiece.alpha > 0.01) continue
 
       const { file, rank } = this.canvasRenderer.squareToCoord(sq, this.boardRenderer.boardAppearance.orientation)
@@ -145,15 +167,15 @@ export class Renderer {
   }
 
   renderGhostPieces(ctx, ghostPieces, captureEffects) {
-    // First draw shadows for all ghosts
+    // Shadows first
     for (const ghost of ghostPieces) {
-      if (ghost && ghost.alpha > 0.01) {
+      if (ghost && ghost.alpha > 0.01 && !ghost.isParticle) {
         ghost.drawShadow(ctx)
         if (ghost.drawDust) ghost.drawDust(ctx)
       }
     }
 
-    // Draw attacker ghost (always normal)
+    // Attacker ghost trail + piece
     const attackerGhost = this.pieceRenderer.ghostPiece
     if (attackerGhost && attackerGhost.alpha > 0.01) {
       attackerGhost.drawTrail(ctx, attackerGhost.color)
@@ -161,18 +183,17 @@ export class Renderer {
       attackerGhost.draw(ctx)
     }
 
-    // Draw victim ghost — special handling for PawnSplit
+    // Victim ghost — special handling for PawnSplit
     const victimGhost = this.pieceRenderer.victimGhostPiece
     if (victimGhost && victimGhost.alpha > 0.01) {
       if (captureEffects?.tier === CaptureTier.PAWN_SPLIT && captureEffects?.effect) {
-        // Use the split rendering method
         this.renderSplitVictim(ctx, victimGhost, captureEffects.effect)
       } else {
         victimGhost.draw(ctx)
       }
     }
 
-    // Draw any remaining ghost pieces passed from animation manager
+    // Other ghost pieces (particles etc.)
     for (const ghost of ghostPieces) {
       if (ghost && ghost.alpha > 0.01 && ghost !== attackerGhost && ghost !== victimGhost) {
         ghost.draw(ctx)
@@ -181,8 +202,6 @@ export class Renderer {
   }
 
   renderSplitVictim(ctx, victimGhost, effect) {
-    // Draw the victim piece split into two halves
-    // Each half is clipped and offset in opposite directions perpendicular to travel
     if (effect.dissolveAlpha <= 0.01) return
 
     const halfW = effect.pieceSize * 0.5
@@ -227,7 +246,6 @@ export class Renderer {
       const alpha = t * 0.12
 
       ctx.globalAlpha = alpha
-      // Warm gold trail color instead of white
       ctx.strokeStyle = '#B8960F'
       ctx.lineWidth = 4 * t
       ctx.lineCap = 'round'
@@ -242,14 +260,13 @@ export class Renderer {
   renderCaptureEffects(ctx, effects) {
     if (!effects) return
 
-    // NEW: If we have a tiered capture effect object, delegate to its render method
-    // Effects render in screen space — no shake translation needed (Camera handles shake)
+    // Delegate to the effect object's render method
     if (effects.effect && typeof effects.effect.render === 'function') {
       effects.effect.render(ctx)
       return
     }
 
-    // LEGACY: Render old-style capture effects
+    // Legacy fallback
     const pieceSize = effects.pieceSize || 64
     const cx = effects.centerX || 0
     const cy = effects.centerY || 0
@@ -269,8 +286,7 @@ export class Renderer {
       ctx.globalAlpha = (1 - effects.ringProgress) * 0.8
       ctx.strokeStyle = '#B8960F'
       ctx.lineWidth = ringWidth
-      ctx.shadowColor = '#B8960F'
-      ctx.shadowBlur = 12
+      ctx.shadowColor = '#B8960F'; ctx.shadowBlur = 12
       ctx.beginPath()
       ctx.arc(cx, cy, ringR, 0, Math.PI * 2)
       ctx.stroke()
@@ -282,28 +298,21 @@ export class Renderer {
         if (f.alpha <= 0) continue
         ctx.save()
         ctx.globalAlpha = f.alpha
-        ctx.translate(f.x, f.y)
-        ctx.rotate(f.rotation)
-        ctx.fillStyle = f.color
-        ctx.shadowColor = f.color
-        ctx.shadowBlur = 6
+        ctx.translate(f.x, f.y); ctx.rotate(f.rotation)
+        ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 6
         if (f.shape === 'square') {
           ctx.fillRect(-f.size / 2, -f.size / 2, f.size, f.size)
         } else if (f.shape === 'diamond') {
           ctx.beginPath()
-          ctx.moveTo(0, -f.size)
-          ctx.lineTo(f.size, 0)
-          ctx.lineTo(0, f.size)
-          ctx.lineTo(-f.size, 0)
-          ctx.closePath()
-          ctx.fill()
+          ctx.moveTo(0, -f.size); ctx.lineTo(f.size, 0)
+          ctx.lineTo(0, f.size); ctx.lineTo(-f.size, 0)
+          ctx.closePath(); ctx.fill()
         } else if (f.shape === 'triangle') {
           ctx.beginPath()
           ctx.moveTo(0, -f.size)
           ctx.lineTo(f.size * 0.866, f.size * 0.5)
           ctx.lineTo(-f.size * 0.866, f.size * 0.5)
-          ctx.closePath()
-          ctx.fill()
+          ctx.closePath(); ctx.fill()
         }
         ctx.restore()
       }

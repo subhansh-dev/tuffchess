@@ -1,0 +1,27 @@
+{
+  "name": "Artisan Parchment",
+  "colors": {
+    "background": "#F5F0E8",
+    "board": {
+      "light": "#E8D5B5",
+      "dark": "#8B7355"
+    },
+    "highlights": {
+      "move": "rgba(184, 150, 15, 0.35)",
+      "capture": "rgba(180, 60, 40, 0.45)",
+      "check": "rgba(200, 50, 40, 0.6)",
+      "lastMove": "rgba(184, 150, 15, 0.25)",
+      "selected": "rgba(139, 115, 85, 0.4)"
+    },
+    "pieces": {
+      "whiteStroke": "#2C2C2C",
+      "blackStroke": "#1a1a1a"
+    },
+    "ui": {
+      "primary": "#B8960F",
+      "secondary": "#8B7355",
+      "text": "#2C2C2C",
+      "textDim": "#6B5344"
+    }
+  }
+}
